@@ -1,1 +1,6 @@
+// Gradle toolchain repositories 설정 (JDK 자동 다운로드 지원)
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
+}
+
 rootProject.name = 'mall-api'
