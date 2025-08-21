@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.SpringBootVersion;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cloud.openfeign.EnableFeignClients;
@@ -114,9 +115,9 @@ public class MallApiApplication {
                 log.info("📍 API Docs:     {}://localhost:{}{}/swagger-ui/index.html", protocol, serverPort, contextPath);
                 log.info("📍 H2 Console:   {}://localhost:{}{}/h2-console (local 프로파일)", protocol, serverPort, contextPath);
                 log.info("📍 JVM Version:  {}", System.getProperty("java.version"));
-                log.info("📍 Spring Boot:  {}", environment.getProperty("spring.boot.version", "Unknown"));
+                log.info("📍 Spring Boot:  {}", SpringBootVersion.getVersion());
                 log.info("=".repeat(80));
-
+                
             } catch (UnknownHostException e) {
                 log.warn("호스트 주소를 가져올 수 없습니다: {}", e.getMessage());
             }

@@ -145,4 +145,46 @@ public interface TodoService {
      * @return 최근 완료된 할일 목록
      */
     PageResponse<TodoResponse> getRecentlyCompleted(Pageable pageable);
+
+    /**
+     * 모든 할일의 총 개수를 조회합니다.
+     * 
+     * @return 할일 총 개수
+     */
+    Long getTodoCount();
+
+    /**
+     * 작성자별 할일 개수를 조회합니다.
+     * 
+     * @param writer 작성자
+     * @return 작성자별 할일 개수
+     */
+    Long getTodoCountByWriter(String writer);
+
+    /**
+     * 완료 상태별 할일 개수를 조회합니다.
+     * 
+     * @param complete 완료 상태
+     * @return 완료 상태별 할일 개수
+     */
+    Long getTodoCountByComplete(Boolean complete);
+
+    /**
+     * 모든 할일을 삭제합니다.
+     */
+    void deleteAllTodos();
+
+    /**
+     * 작성자별 모든 할일을 삭제합니다.
+     * 
+     * @param writer 작성자
+     */
+    void deleteTodosByWriter(String writer);
+
+    /**
+     * 모든 할일 목록을 리스트로 조회합니다. (페이징 없음)
+     * 
+     * @return 모든 할일 목록
+     */
+    List<TodoResponse> getAllTodos();
 }

@@ -132,4 +132,27 @@ public interface TodoRepository extends JpaRepository<Todo, Long> {
      * @return 존재 여부
      */
     boolean existsByWriter(String writer);
+
+    /**
+     * 작성자별 할일 개수를 조회합니다.
+     * 
+     * @param writer 작성자
+     * @return 작성자별 할일 개수
+     */
+    long countByWriter(String writer);
+
+    /**
+     * 완료 상태별 할일 개수를 조회합니다.
+     * 
+     * @param complete 완료 상태
+     * @return 완료 상태별 할일 개수
+     */
+    long countByComplete(Boolean complete);
+
+    /**
+     * 작성자별 모든 할일을 삭제합니다.
+     * 
+     * @param writer 작성자
+     */
+    void deleteByWriter(String writer);
 }

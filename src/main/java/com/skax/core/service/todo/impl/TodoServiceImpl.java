@@ -191,6 +191,47 @@ public class TodoServiceImpl implements TodoService {
         return PageResponse.from(responsePage);
     }
 
+    @Override
+    public Long getTodoCount() {
+        log.info("모든 할일 개수 조회");
+        return todoRepository.count();
+    }
+
+    @Override
+    public Long getTodoCountByWriter(String writer) {
+        log.info("작성자별 할일 개수 조회 - 작성자: {}", writer);
+        return todoRepository.countByWriter(writer);
+    }
+
+    @Override
+    public Long getTodoCountByComplete(Boolean complete) {
+        log.info("완료 상태별 할일 개수 조회 - 완료여부: {}", complete);
+        return todoRepository.countByComplete(complete);
+    }
+
+    @Override
+    @Transactional
+    public void deleteAllTodos() {
+        log.info("모든 할일 삭제");
+        todoRepository.deleteAll();
+    }
+
+    @Override
+    @Transactional
+    public void deleteTodosByWriter(String writer) {
+        log.info("작성자별 할일 삭제 - 작성자: {}", writer);
+        todoRepository.deleteByWriter(writer);
+    }
+
+    @Override
+    public List<TodoResponse> getAllTodos() {
+        log.info("모든 할일 목록 조회 (페이징 없음)");
+        return todoRepository.findAll()
+                .stream()
+                .map(todoMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
     /**
      * 할일 번호로 할일을 조회하는 private 메서드
      * 

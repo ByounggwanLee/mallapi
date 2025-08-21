@@ -8,6 +8,8 @@ import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
+import io.swagger.v3.oas.models.tags.Tag;
+import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -40,23 +42,48 @@ public class OpenApiConfig {
      */
     @Bean
     public OpenAPI mallApiOpenAPI() {
+        String localUrl = "http://localhost:" + serverPort + contextPath;
+        String externalUrl = "https://api.mallapi.com" + serverPort + contextPath;
+        
         return new OpenAPI()
                 .info(apiInfo())
                 .servers(List.of(
-                    new Server().url("http://localhost:8080").description("개발 서버"),
-                    new Server().url("https://api.mallapi.com").description("운영 서버")
+                    new Server().url(localUrl).description("로컬 개발 서버"),
+                    new Server().url(externalUrl).description("운영 서버")
+                ))
+                .tags(List.of(
+                    new Tag().name("Samples").description("샘플 API - 기본 샘플 데이터 관리"),
+                    new Tag().name("Todos").description("할 일 API - Todo 작업 관리"),
+                    new Tag().name("Members").description("멤버 API - 사용자 계정 관리"),
+                    new Tag().name("Products").description("상품 API - 상품 정보 관리"),
+                    new Tag().name("Roles").description("역할 API - 사용자 권한 관리")
                 ))
                 .components(new Components()
+                    // JWT Bearer 인증
                     .addSecuritySchemes("bearerAuth", 
                         new SecurityScheme()
                             .type(SecurityScheme.Type.HTTP)
                             .scheme("bearer")
                             .bearerFormat("JWT")
-                            .description("JWT 토큰을 입력하세요"))
+                            .description("JWT 토큰을 입력하세요 (Bearer 제외)"))
+                    // API Key 인증
+                    .addSecuritySchemes("apiKey", 
+                        new SecurityScheme()
+                            .type(SecurityScheme.Type.APIKEY)
+                            .in(SecurityScheme.In.HEADER)
+                            .name("X-API-KEY")
+                            .description("API Key를 헤더에 포함하세요"))
+                    // OAuth2 인증
                     .addSecuritySchemes("oauth2", 
                         new SecurityScheme()
                             .type(SecurityScheme.Type.OAUTH2)
-                            .description("OAuth2 인증")))
+                            .description("OAuth2 인증 (Google, Naver, Kakao)"))
+                    // Basic 인증 (개발용)
+                    .addSecuritySchemes("basicAuth", 
+                        new SecurityScheme()
+                            .type(SecurityScheme.Type.HTTP)
+                            .scheme("basic")
+                            .description("Basic 인증 (개발 환경 전용)")))
                 .addSecurityItem(new SecurityRequirement().addList("bearerAuth"));
     }
 
@@ -73,23 +100,70 @@ public class OpenApiConfig {
                         
                         이 문서는 Mall API의 전체 엔드포인트에 대한 설명을 제공합니다.
                         
-                        ## 응답 형식 표준화 (AxResponse)
+                        ## 🚀 주요 기능
+                        
+                        - **Todo 관리**: 할 일 생성, 조회, 수정, 삭제
+                        - **사용자 관리**: 회원가입, 로그인, 프로필 관리
+                        - **상품 관리**: 상품 등록, 조회, 수정, 삭제
+                        - **권한 관리**: 역할 기반 접근 제어
+                        - **OAuth2 연동**: 소셜 로그인 지원
+                        
+                        ## 📋 API 그룹 안내
+                        
+                        - **🌐 전체 API**: 모든 API 엔드포인트
+                        - **📋 Samples API**: 샘플 데이터 관리
+                        - **✅ Todos API**: 할 일 관리
+                        - **👤 Members API**: 사용자 계정 관리
+                        - **🛍️ Products API**: 상품 정보 관리
+                        - **🔐 Roles API**: 권한 관리
+                        - **⚙️ Admin API**: 관리자 기능
+                        - **🌍 Public API**: 인증 불요 공개 API
+                        
+                        ## 📝 응답 형식 표준화 (AxResponse)
                         
                         모든 API 응답은 `AxResponse` 구조를 따르며, 다음과 같은 표준 형식을 사용합니다:
                         
-                        ### 성공 응답
+                        ### ✅ 성공 응답
                         ```json
                         {
                           "success": true,
                           "message": "성공 메시지",
-                          "data": { /* 실제 데이터 */ },
-                          "timestamp": "2025-08-19T10:30:00",
+                          "data": { 
+                            "id": 1,
+                            "name": "샘플 데이터"
+                          },
+                          "timestamp": "2025-08-21T10:30:00",
                           "statusCode": 200,
                           "statusText": "OK"
                         }
                         ```
                         
-                        ### 실패 응답
+                        ### 📄 페이징 응답
+                        ```json
+                        {
+                          "success": true,
+                          "message": "목록 조회 성공",
+                          "data": {
+                            "content": [/* 데이터 배열 */],
+                            "pageable": {
+                              "page": 0,
+                              "size": 20,
+                              "sort": "createdAt,desc"
+                            },
+                            "totalElements": 100,
+                            "totalPages": 5,
+                            "first": true,
+                            "last": false,
+                            "hasNext": true,
+                            "hasPrevious": false
+                          },
+                          "timestamp": "2025-08-21T10:30:00",
+                          "statusCode": 200,
+                          "statusText": "OK"
+                        }
+                        ```
+                        
+                        ### ❌ 실패 응답
                         ```json
                         {
                           "success": false,
@@ -98,20 +172,69 @@ public class OpenApiConfig {
                             "hscode": "NOT_FOUND",
                             "code": "U001",
                             "message": "사용자를 찾을 수 없습니다",
-                            "details": "상세 에러 정보",
-                            "timestamp": "2025-08-19T10:30:00",
-                            "path": "/api/v1/users/123"
+                            "details": "ID 123에 해당하는 사용자가 존재하지 않습니다",
+                            "timestamp": "2025-08-21T10:30:00",
+                            "path": "/api/v1/users/123",
+                            "fieldErrors": [
+                              {
+                                "field": "email",
+                                "rejectedValue": "invalid-email",
+                                "message": "올바른 이메일 형식이 아닙니다"
+                              }
+                            ]
                           },
-                          "timestamp": "2025-08-19T10:30:00",
+                          "timestamp": "2025-08-21T10:30:00",
                           "statusCode": 404,
                           "statusText": "Not Found"
                         }
                         ```
                         
-                        ## 인증
+                        ## 🔐 인증 방식
                         
-                        이 API는 JWT 기반 인증을 사용합니다. 보안이 필요한 엔드포인트에 접근하려면 
-                        Authorization 헤더에 Bearer 토큰을 포함해야 합니다.
+                        ### 1. JWT Bearer Token
+                        ```
+                        Authorization: Bearer <JWT_TOKEN>
+                        ```
+                        
+                        ### 2. API Key
+                        ```
+                        X-API-KEY: <YOUR_API_KEY>
+                        ```
+                        
+                        ### 3. OAuth2 (소셜 로그인)
+                        - Google OAuth2
+                        - Naver OAuth2
+                        - Kakao OAuth2
+                        
+                        ### 4. Basic Auth (개발 환경 전용)
+                        ```
+                        Authorization: Basic <base64(username:password)>
+                        ```
+                        
+                        ## 📊 HTTP 상태 코드
+                        
+                        | 코드 | 의미 | 설명 |
+                        |------|------|------|
+                        | 200 | OK | 요청 성공 |
+                        | 201 | Created | 리소스 생성 성공 |
+                        | 400 | Bad Request | 잘못된 요청 |
+                        | 401 | Unauthorized | 인증 실패 |
+                        | 403 | Forbidden | 권한 부족 |
+                        | 404 | Not Found | 리소스 없음 |
+                        | 409 | Conflict | 리소스 충돌 |
+                        | 500 | Internal Server Error | 서버 오류 |
+                        
+                        ## 🚀 시작하기
+                        
+                        1. **인증**: 로그인 API를 통해 JWT 토큰 획득
+                        2. **API 호출**: Authorization 헤더에 토큰 포함
+                        3. **응답 확인**: 표준화된 AxResponse 형식으로 결과 확인
+                        
+                        ## 🔍 API 탐색 팁
+                        
+                        - 상단의 그룹 선택기로 원하는 API 카테고리 선택
+                        - 각 엔드포인트의 "Try it out" 버튼으로 실제 테스트 가능
+                        - 인증이 필요한 API는 우상단 "Authorize" 버튼으로 토큰 설정
                         """)
                 .version("1.0.0")
                 .contact(new Contact()
@@ -121,5 +244,123 @@ public class OpenApiConfig {
                 .license(new License()
                     .name("MIT License")
                     .url("https://opensource.org/licenses/MIT"));
+    }
+
+    /**
+     * 전체 API 그룹 설정
+     * 
+     * @return 전체 API 그룹 설정
+     */
+    @Bean
+    public GroupedOpenApi allApi() {
+        return GroupedOpenApi.builder()
+                .group("전체")
+                .displayName("🌐 전체 API")
+                .pathsToMatch("/api/**")
+                .build();
+    }
+
+    /**
+     * Samples API 그룹 설정
+     * 
+     * @return Samples API 그룹 설정
+     */
+    @Bean
+    public GroupedOpenApi samplesApi() {
+        return GroupedOpenApi.builder()
+                .group("samples")
+                .displayName("📋 Samples API")
+                .pathsToMatch("/api/**/sample/**")
+                .packagesToScan("com.skax.core.controller.sample")
+                .build();
+    }
+
+    /**
+     * Todos API 그룹 설정
+     * 
+     * @return Todos API 그룹 설정
+     */
+    @Bean
+    public GroupedOpenApi todosApi() {
+        return GroupedOpenApi.builder()
+                .group("todos")
+                .displayName("✅ Todos API")
+                .pathsToMatch("/api/**/todos/**")
+                .packagesToScan("com.skax.core.controller.todo")
+                .build();
+    }
+
+    /**
+     * Members API 그룹 설정
+     * 
+     * @return Members API 그룹 설정
+     */
+    @Bean
+    public GroupedOpenApi membersApi() {
+        return GroupedOpenApi.builder()
+                .group("members")
+                .displayName("👤 Members API")
+                .pathsToMatch("/api/**/members/**", "/api/**/auth/**")
+                .packagesToScan("com.skax.core.controller.member")
+                .build();
+    }
+
+    /**
+     * Products API 그룹 설정
+     * 
+     * @return Products API 그룹 설정
+     */
+    @Bean
+    public GroupedOpenApi productsApi() {
+        return GroupedOpenApi.builder()
+                .group("products")
+                .displayName("🛍️ Products API")
+                .pathsToMatch("/api/**/products/**")
+                .packagesToScan("com.skax.core.controller.product")
+                .build();
+    }
+
+    /**
+     * Roles API 그룹 설정
+     * 
+     * @return Roles API 그룹 설정
+     */
+    @Bean
+    public GroupedOpenApi rolesApi() {
+        return GroupedOpenApi.builder()
+                .group("roles")
+                .displayName("🔐 Roles API")
+                .pathsToMatch("/api/**/roles/**")
+                .packagesToScan("com.skax.core.controller.role")
+                .build();
+    }
+
+    /**
+     * Admin API 그룹 설정
+     * 
+     * @return Admin API 그룹 설정
+     */
+    @Bean
+    public GroupedOpenApi adminApi() {
+        return GroupedOpenApi.builder()
+                .group("admin")
+                .displayName("⚙️ Admin API")
+                .pathsToMatch("/api/**/admin/**")
+                .packagesToScan("com.skax.core.controller.admin")
+                .build();
+    }
+
+    /**
+     * Public API 그룹 설정 (인증이 필요없는 API)
+     * 
+     * @return Public API 그룹 설정
+     */
+    @Bean
+    public GroupedOpenApi publicApi() {
+        return GroupedOpenApi.builder()
+                .group("public")
+                .displayName("🌍 Public API")
+                .pathsToMatch("/api/**/public/**", "/api/health", "/api/info")
+                .build();
     }
 }

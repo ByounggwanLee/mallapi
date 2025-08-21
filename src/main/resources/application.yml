@@ -87,19 +87,91 @@ server:
 logging:
   level:
     com.skax.core: DEBUG
-    org.springframework.security: DEBUG
-    org.springframework.web: DEBUG
+    org.springframework.security: INFO
+    org.springframework.web: INFO
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+# 애플리케이션 커스텀 설정
+app:
+  # CORS 설정
+  cors:
+    allowed-origins: 
+      - "http://localhost:3000"
+      - "http://localhost:3001"
+      - "http://localhost:8080"
+      - "http://127.0.0.1:3000"
+      - "http://127.0.0.1:3001"
+      - "http://127.0.0.1:8080"
+      - "https://mallapi.com"
+      - "https://www.mallapi.com"
+      - "https://www.mallapi.com:8080"
+    allowed-methods: 
+      - "GET"
+      - "POST"
+      - "PUT"
+      - "PATCH"
+      - "DELETE"
+      - "OPTIONS"
+    allowed-headers: "*"
+    allow-credentials: true
+    max-age: 3600
 
 # OpenAPI 문서 설정
 springdoc:
   api-docs:
     path: /api-docs
+    enabled: true
+    groups:
+      enabled: true
   swagger-ui:
     path: /swagger-ui.html
     operations-sorter: method
     tags-sorter: alpha
+    enabled: true
+    try-it-out-enabled: true
+    config-url: /api/api-docs/swagger-config
+    url: /api/api-docs
+    display-request-duration: true
+    show-extensions: true
+    show-common-extensions: true
+    doc-expansion: none
+    default-model-expand-depth: 1
+    default-models-expand-depth: 1
+    # 추가된 UI 개선 설정
+    deep-linking: true
+    display-operation-id: false
+    default-model-rendering: example
+    disable-swagger-default-url: true
+    persist-authorization: true
+    use-root-path: true
+    # 필터 설정
+    filter: true
+    syntax-highlight:
+      activate: true
+      theme: agate
+  # API 문서 그룹 설정
+  group-configs:
+    - group: 'default'
+      display-name: '🌐 전체 API'
+      paths-to-match: '/api/**'
+    - group: 'samples'
+      display-name: '📋 Samples API'
+      paths-to-match: '/api/**/sample/**'
+    - group: 'todos'
+      display-name: '✅ Todos API'
+      paths-to-match: '/api/**/todos/**'
+    - group: 'members'
+      display-name: '👤 Members API'
+      paths-to-match: '/api/**/members/**'
+    - group: 'products'
+      display-name: '🛍️ Products API'
+      paths-to-match: '/api/**/products/**'
+    - group: 'admin'
+      display-name: '⚙️ Admin API'
+      paths-to-match: '/api/**/admin/**'
+  packages-to-scan: com.skax.core
+  paths-to-match: /api/**
 
 # 관리 엔드포인트 설정
 management:

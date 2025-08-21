@@ -46,7 +46,7 @@ import lombok.extern.slf4j.Slf4j;
  * @since 2025-08-19
  * @version 1.0
  */
-@Tag(name = "Sample API", description = "응답 형식 표준화 테스트를 위한 샘플 API")
+@Tag(name = "Samples", description = "샘플 API - 기본 샘플 데이터 관리")
 @RestController
 @RequestMapping("/api/v1/samples")
 @Validated
