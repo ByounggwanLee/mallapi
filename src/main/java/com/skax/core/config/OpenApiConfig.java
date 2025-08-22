@@ -54,8 +54,6 @@ public class OpenApiConfig {
                 .tags(List.of(
                     new Tag().name("Samples").description("샘플 API - 기본 샘플 데이터 관리"),
                     new Tag().name("Todos").description("할 일 API - Todo 작업 관리"),
-                    new Tag().name("Members").description("멤버 API - 사용자 계정 관리"),
-                    new Tag().name("Products").description("상품 API - 상품 정보 관리"),
                     new Tag().name("Roles").description("역할 API - 사용자 권한 관리")
                 ))
                 .components(new Components()
@@ -103,18 +101,14 @@ public class OpenApiConfig {
                         ## 🚀 주요 기능
                         
                         - **Todo 관리**: 할 일 생성, 조회, 수정, 삭제
-                        - **사용자 관리**: 회원가입, 로그인, 프로필 관리
-                        - **상품 관리**: 상품 등록, 조회, 수정, 삭제
+                        - **샘플 관리**: 기본 샘플 데이터 관리
                         - **권한 관리**: 역할 기반 접근 제어
-                        - **OAuth2 연동**: 소셜 로그인 지원
                         
                         ## 📋 API 그룹 안내
                         
                         - **🌐 전체 API**: 모든 API 엔드포인트
                         - **📋 Samples API**: 샘플 데이터 관리
                         - **✅ Todos API**: 할 일 관리
-                        - **👤 Members API**: 사용자 계정 관리
-                        - **🛍️ Products API**: 상품 정보 관리
                         - **🔐 Roles API**: 권한 관리
                         - **⚙️ Admin API**: 관리자 기능
                         - **🌍 Public API**: 인증 불요 공개 API
@@ -287,36 +281,6 @@ public class OpenApiConfig {
                 .displayName("✅ Todos API")
                 .pathsToMatch("/api/**/todos/**")
                 .packagesToScan("com.skax.core.controller.todo")
-                .build();
-    }
-
-    /**
-     * Members API 그룹 설정
-     * 
-     * @return Members API 그룹 설정
-     */
-    @Bean
-    public GroupedOpenApi membersApi() {
-        return GroupedOpenApi.builder()
-                .group("members")
-                .displayName("👤 Members API")
-                .pathsToMatch("/api/**/members/**", "/api/**/auth/**")
-                .packagesToScan("com.skax.core.controller.member")
-                .build();
-    }
-
-    /**
-     * Products API 그룹 설정
-     * 
-     * @return Products API 그룹 설정
-     */
-    @Bean
-    public GroupedOpenApi productsApi() {
-        return GroupedOpenApi.builder()
-                .group("products")
-                .displayName("🛍️ Products API")
-                .pathsToMatch("/api/**/products/**")
-                .packagesToScan("com.skax.core.controller.product")
                 .build();
     }
 

@@ -19,6 +19,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
@@ -224,7 +225,7 @@ public class TodoController {
         @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     public AxResponseEntity<PageResponse<TodoResponse>> getTodos(
-            @PageableDefault(size = 20) Pageable pageable) {
+            @PageableDefault(size = 20, sort = "tno", direction = Sort.Direction.DESC) Pageable pageable) {
         log.info("할일 목록 조회 요청 - 페이지: {}, 크기: {}", pageable.getPageNumber(), pageable.getPageSize());
         
         PageResponse<TodoResponse> response = todoService.getAllTodos(pageable);

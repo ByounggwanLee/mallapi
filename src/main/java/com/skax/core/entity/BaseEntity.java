@@ -35,7 +35,8 @@ public abstract class BaseEntity {
      * 엔티티가 처음 저장될 때 자동으로 설정됩니다.
      */
     @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false, 
+            columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime createdAt;
 
     /**
@@ -43,6 +44,31 @@ public abstract class BaseEntity {
      * 엔티티가 수정될 때마다 자동으로 갱신됩니다.
      */
     @LastModifiedDate
-    @Column(name = "updated_at", nullable = false)
+    @Column(name = "updated_at", nullable = false,
+            columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime updatedAt;
+
+    /**
+     * 엔티티 저장 전 실행되는 메서드
+     * createdAt과 updatedAt을 현재 시간으로 설정합니다.
+     */
+    @PrePersist
+    protected void onCreate() {
+        LocalDateTime now = LocalDateTime.now();
+        if (createdAt == null) {
+            createdAt = now;
+        }
+        if (updatedAt == null) {
+            updatedAt = now;
+        }
+    }
+
+    /**
+     * 엔티티 업데이트 전 실행되는 메서드
+     * updatedAt을 현재 시간으로 갱신합니다.
+     */
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }

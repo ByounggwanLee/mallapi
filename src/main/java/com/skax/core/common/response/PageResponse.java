@@ -18,6 +18,16 @@ import java.util.List;
 public class PageResponse<T> {
 
     /**
+     * 페이지 데이터
+     */
+    private final List<T> content;
+
+    /**
+     * 페이징 정보
+     */
+    private final Pageable pageable;
+
+    /**
      * 현재 페이지 번호 (0부터 시작)
      */
     private final int page;
@@ -53,11 +63,6 @@ public class PageResponse<T> {
     private final boolean empty;
 
     /**
-     * 페이지 데이터
-     */
-    private final List<T> content;
-
-    /**
      * 페이징 정보와 컨텐츠로 PageResponse를 생성합니다.
      * 
      * @param content 페이지 데이터
@@ -68,12 +73,30 @@ public class PageResponse<T> {
      * @return PageResponse 객체
      */
     public static <T> PageResponse<T> of(List<T> content, int page, int size, long totalElements) {
+        return of(content, page, size, totalElements, null);
+    }
+
+    /**
+     * 페이징 정보와 컨텐츠로 PageResponse를 생성합니다. (정렬 정보 포함)
+     * 
+     * @param content 페이지 데이터
+     * @param page 현재 페이지 번호 (0부터 시작)
+     * @param size 페이지 크기
+     * @param totalElements 전체 요소 수
+     * @param sort 정렬 정보
+     * @param <T> 데이터 타입
+     * @return PageResponse 객체
+     */
+    public static <T> PageResponse<T> of(List<T> content, int page, int size, long totalElements, String sort) {
         int totalPages = (int) Math.ceil((double) totalElements / size);
         boolean first = page == 0;
         boolean last = page >= totalPages - 1;
         boolean empty = content.isEmpty();
         
+        Pageable pageable = Pageable.of(page, size, sort);
+        
         return PageResponse.<T>builder()
+                .pageable(pageable)
                 .page(page)
                 .size(size)
                 .totalElements(totalElements)
@@ -107,9 +130,27 @@ public class PageResponse<T> {
             java.lang.reflect.Method isEmpty = pageClass.getMethod("isEmpty");
             java.lang.reflect.Method getContent = pageClass.getMethod("getContent");
             
+            // 정렬 정보 추출 시도
+            String sortInfo = null;
+            try {
+                java.lang.reflect.Method getSort = pageClass.getMethod("getSort");
+                Object sortObject = getSort.invoke(page);
+                if (sortObject != null) {
+                    sortInfo = sortObject.toString();
+                }
+            } catch (Exception ignored) {
+                // 정렬 정보가 없는 경우 무시
+            }
+            
+            int pageNumber = (Integer) getNumber.invoke(page);
+            int pageSize = (Integer) getSize.invoke(page);
+            
+            Pageable pageable = Pageable.of(pageNumber, pageSize, sortInfo);
+            
             return PageResponse.<T>builder()
-                    .page((Integer) getNumber.invoke(page))
-                    .size((Integer) getSize.invoke(page))
+                    .pageable(pageable)
+                    .page(pageNumber)
+                    .size(pageSize)
                     .totalElements((Long) getTotalElements.invoke(page))
                     .totalPages((Integer) getTotalPages.invoke(page))
                     .first((Boolean) isFirst.invoke(page))

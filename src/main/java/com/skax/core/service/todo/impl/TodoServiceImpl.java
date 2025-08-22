@@ -13,10 +13,13 @@ import com.skax.core.service.todo.TodoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -87,7 +90,10 @@ public class TodoServiceImpl implements TodoService {
     public PageResponse<TodoResponse> getAllTodos(Pageable pageable) {
         log.info("전체 할일 목록 조회 - 페이지: {}, 크기: {}", pageable.getPageNumber(), pageable.getPageSize());
         
-        Page<Todo> todoPage = todoRepository.findAll(pageable);
+        // 정렬 파라미터 검증 및 정리
+        Pageable validatedPageable = validateAndFixPageable(pageable);
+        
+        Page<Todo> todoPage = todoRepository.findAll(validatedPageable);
         Page<TodoResponse> responsePage = todoPage.map(todoMapper::toResponse);
         
         return PageResponse.from(responsePage);
@@ -97,7 +103,10 @@ public class TodoServiceImpl implements TodoService {
     public PageResponse<TodoResponse> getTodosByWriter(String writer, Pageable pageable) {
         log.info("작성자별 할일 목록 조회 - 작성자: {}", writer);
         
-        Page<Todo> todoPage = todoRepository.findByWriter(writer, pageable);
+        // 정렬 파라미터 검증 및 정리
+        Pageable validatedPageable = validateAndFixPageable(pageable);
+        
+        Page<Todo> todoPage = todoRepository.findByWriter(writer, validatedPageable);
         Page<TodoResponse> responsePage = todoPage.map(todoMapper::toResponse);
         
         return PageResponse.from(responsePage);
@@ -107,7 +116,10 @@ public class TodoServiceImpl implements TodoService {
     public PageResponse<TodoResponse> getTodosByComplete(Boolean complete, Pageable pageable) {
         log.info("완료 상태별 할일 목록 조회 - 완료여부: {}", complete);
         
-        Page<Todo> todoPage = todoRepository.findByComplete(complete, pageable);
+        // 정렬 파라미터 검증 및 정리
+        Pageable validatedPageable = validateAndFixPageable(pageable);
+        
+        Page<Todo> todoPage = todoRepository.findByComplete(complete, validatedPageable);
         Page<TodoResponse> responsePage = todoPage.map(todoMapper::toResponse);
         
         return PageResponse.from(responsePage);
@@ -117,7 +129,10 @@ public class TodoServiceImpl implements TodoService {
     public PageResponse<TodoResponse> getTodosByWriterAndComplete(String writer, Boolean complete, Pageable pageable) {
         log.info("작성자와 완료 상태별 할일 목록 조회 - 작성자: {}, 완료여부: {}", writer, complete);
         
-        Page<Todo> todoPage = todoRepository.findByWriterAndComplete(writer, complete, pageable);
+        // 정렬 파라미터 검증 및 정리
+        Pageable validatedPageable = validateAndFixPageable(pageable);
+        
+        Page<Todo> todoPage = todoRepository.findByWriterAndComplete(writer, complete, validatedPageable);
         Page<TodoResponse> responsePage = todoPage.map(todoMapper::toResponse);
         
         return PageResponse.from(responsePage);
@@ -246,5 +261,44 @@ public class TodoServiceImpl implements TodoService {
                     return new BusinessException(ErrorCode.TODO_NOT_FOUND, 
                             String.format("할일번호 %d에 해당하는 할일을 찾을 수 없습니다.", tno));
                 });
+    }
+
+    /**
+     * Pageable 객체의 정렬 파라미터를 검증하고 안전한 정렬을 적용합니다.
+     * 
+     * @param pageable 원본 Pageable 객체
+     * @return 검증된 Pageable 객체
+     */
+    private Pageable validateAndFixPageable(Pageable pageable) {
+        // 허용되는 정렬 필드 목록
+        final String[] ALLOWED_SORT_FIELDS = {"tno", "title", "writer", "complete", "createdAt", "updatedAt"};
+        
+        Sort validatedSort = Sort.by("tno").descending(); // 기본 정렬
+        
+        if (pageable.getSort().isSorted()) {
+            List<Sort.Order> validOrders = new ArrayList<>();
+            
+            for (Sort.Order order : pageable.getSort()) {
+                String property = order.getProperty();
+                
+                // 허용된 필드인지 확인
+                if (java.util.Arrays.asList(ALLOWED_SORT_FIELDS).contains(property)) {
+                    validOrders.add(order);
+                    log.debug("유효한 정렬 필드 적용: {} {}", property, order.getDirection());
+                } else {
+                    log.warn("허용되지 않은 정렬 필드 무시: {}", property);
+                }
+            }
+            
+            if (!validOrders.isEmpty()) {
+                validatedSort = Sort.by(validOrders);
+            }
+        }
+        
+        return PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                validatedSort
+        );
     }
 }

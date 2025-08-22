@@ -1,13 +1,16 @@
 package com.skax.core.controller.sample;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -70,7 +73,8 @@ public class SampleController {
     @GetMapping
     public AxResponseEntity<PageResponse<SampleResponse>> getSamples(
             @PageableDefault(size = 20) Pageable pageable) {
-        log.info("Getting samples with pagination: page={}, size={}", pageable.getPageNumber(), pageable.getPageSize());
+        log.info("Getting samples with pagination: page={}, size={}, sort={}", 
+                pageable.getPageNumber(), pageable.getPageSize(), pageable.getSort());
         
         // 샘플 데이터 생성
         List<SampleResponse> samples = IntStream.range(0, 50)
@@ -81,7 +85,12 @@ public class SampleController {
                         .status("ACTIVE")
                         .createdAt(LocalDateTime.now().minusDays(i))
                         .build())
-                .toList();
+                .collect(Collectors.toList());
+        
+        // 정렬 적용
+        if (pageable.getSort().isSorted()) {
+            samples = applySorting(samples, pageable.getSort());
+        }
         
         // 페이징 처리
         int start = (int) pageable.getOffset();
@@ -319,5 +328,56 @@ public class SampleController {
 
         @NotBlank(message = "설명은 필수입니다")
         private String description;
+    }
+
+    /**
+     * 샘플 리스트에 정렬을 적용하는 헬퍼 메서드
+     * 
+     * @param samples 정렬할 샘플 리스트
+     * @param sort 정렬 정보
+     * @return 정렬된 샘플 리스트
+     */
+    private List<SampleResponse> applySorting(List<SampleResponse> samples, Sort sort) {
+        Comparator<SampleResponse> comparator = null;
+        
+        for (Sort.Order order : sort) {
+            Comparator<SampleResponse> currentComparator = null;
+            
+            switch (order.getProperty()) {
+                case "id":
+                    currentComparator = Comparator.comparing(SampleResponse::getId);
+                    break;
+                case "name":
+                    currentComparator = Comparator.comparing(SampleResponse::getName);
+                    break;
+                case "status":
+                    currentComparator = Comparator.comparing(SampleResponse::getStatus);
+                    break;
+                case "createdAt":
+                    currentComparator = Comparator.comparing(SampleResponse::getCreatedAt);
+                    break;
+                default:
+                    log.warn("정렬할 수 없는 필드입니다: {}", order.getProperty());
+                    continue;
+            }
+            
+            if (order.getDirection() == Sort.Direction.DESC) {
+                currentComparator = currentComparator.reversed();
+            }
+            
+            if (comparator == null) {
+                comparator = currentComparator;
+            } else {
+                comparator = comparator.thenComparing(currentComparator);
+            }
+        }
+        
+        if (comparator != null) {
+            return samples.stream()
+                    .sorted(comparator)
+                    .collect(Collectors.toList());
+        }
+        
+        return samples;
     }
 }
