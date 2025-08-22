@@ -43,7 +43,7 @@ public class OpenApiConfig {
     @Bean
     public OpenAPI mallApiOpenAPI() {
         String localUrl = "http://localhost:" + serverPort + contextPath;
-        String externalUrl = "https://api.mallapi.com" + serverPort + contextPath;
+        String externalUrl = "https://api.mallapi.com" + contextPath;
         
         return new OpenAPI()
                 .info(apiInfo())
@@ -57,32 +57,13 @@ public class OpenApiConfig {
                     new Tag().name("Roles").description("역할 API - 사용자 권한 관리")
                 ))
                 .components(new Components()
-                    // JWT Bearer 인증
+                    // JWT Bearer 인증만 포함
                     .addSecuritySchemes("bearerAuth", 
                         new SecurityScheme()
                             .type(SecurityScheme.Type.HTTP)
                             .scheme("bearer")
                             .bearerFormat("JWT")
-                            .description("JWT 토큰을 입력하세요 (Bearer 제외)"))
-                    // API Key 인증
-                    .addSecuritySchemes("apiKey", 
-                        new SecurityScheme()
-                            .type(SecurityScheme.Type.APIKEY)
-                            .in(SecurityScheme.In.HEADER)
-                            .name("X-API-KEY")
-                            .description("API Key를 헤더에 포함하세요"))
-                    // OAuth2 인증
-                    .addSecuritySchemes("oauth2", 
-                        new SecurityScheme()
-                            .type(SecurityScheme.Type.OAUTH2)
-                            .description("OAuth2 인증 (Google, Naver, Kakao)"))
-                    // Basic 인증 (개발용)
-                    .addSecuritySchemes("basicAuth", 
-                        new SecurityScheme()
-                            .type(SecurityScheme.Type.HTTP)
-                            .scheme("basic")
-                            .description("Basic 인증 (개발 환경 전용)")))
-                .addSecurityItem(new SecurityRequirement().addList("bearerAuth"));
+                            .description("JWT 토큰을 입력하세요")));
     }
 
     /**
@@ -109,8 +90,6 @@ public class OpenApiConfig {
                         - **🌐 전체 API**: 모든 API 엔드포인트
                         - **📋 Samples API**: 샘플 데이터 관리
                         - **✅ Todos API**: 할 일 관리
-                        - **🔐 Roles API**: 권한 관리
-                        - **⚙️ Admin API**: 관리자 기능
                         - **🌍 Public API**: 인증 불요 공개 API
                         
                         ## 📝 응답 형식 표준화 (AxResponse)
@@ -248,7 +227,7 @@ public class OpenApiConfig {
     @Bean
     public GroupedOpenApi allApi() {
         return GroupedOpenApi.builder()
-                .group("전체")
+                .group("all")
                 .displayName("🌐 전체 API")
                 .pathsToMatch("/api/**")
                 .build();
@@ -281,36 +260,6 @@ public class OpenApiConfig {
                 .displayName("✅ Todos API")
                 .pathsToMatch("/api/**/todos/**")
                 .packagesToScan("com.skax.core.controller.todo")
-                .build();
-    }
-
-    /**
-     * Roles API 그룹 설정
-     * 
-     * @return Roles API 그룹 설정
-     */
-    @Bean
-    public GroupedOpenApi rolesApi() {
-        return GroupedOpenApi.builder()
-                .group("roles")
-                .displayName("🔐 Roles API")
-                .pathsToMatch("/api/**/roles/**")
-                .packagesToScan("com.skax.core.controller.role")
-                .build();
-    }
-
-    /**
-     * Admin API 그룹 설정
-     * 
-     * @return Admin API 그룹 설정
-     */
-    @Bean
-    public GroupedOpenApi adminApi() {
-        return GroupedOpenApi.builder()
-                .group("admin")
-                .displayName("⚙️ Admin API")
-                .pathsToMatch("/api/**/admin/**")
-                .packagesToScan("com.skax.core.controller.admin")
                 .build();
     }
 

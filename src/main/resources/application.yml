@@ -120,28 +120,27 @@ app:
 # OpenAPI 문서 설정
 springdoc:
   api-docs:
-    path: /api-docs
     enabled: true
     groups:
       enabled: true
   swagger-ui:
-    path: /swagger-ui.html
-    operations-sorter: method
-    tags-sorter: alpha
     enabled: true
     try-it-out-enabled: true
-    config-url: /api/api-docs/swagger-config
-    url: /api/api-docs
     display-request-duration: true
     show-extensions: true
     show-common-extensions: true
     doc-expansion: none
     default-model-expand-depth: 1
     default-models-expand-depth: 1
-    # 추가된 UI 개선 설정
+    operations-sorter: method
+    tags-sorter: alpha
     deep-linking: true
     display-operation-id: false
     default-model-rendering: example
+    show-actuator: false
+    # OAuth 설정 문제 방지
+    oauth:
+      use-pkce-with-authorization-code-grant: false
     disable-swagger-default-url: true
     persist-authorization: true
     use-root-path: true
@@ -150,26 +149,7 @@ springdoc:
     syntax-highlight:
       activate: true
       theme: agate
-  # API 문서 그룹 설정
-  group-configs:
-    - group: 'default'
-      display-name: '🌐 전체 API'
-      paths-to-match: '/api/**'
-    - group: 'samples'
-      display-name: '📋 Samples API'
-      paths-to-match: '/api/**/sample/**'
-    - group: 'todos'
-      display-name: '✅ Todos API'
-      paths-to-match: '/api/**/todos/**'
-    - group: 'members'
-      display-name: '👤 Members API'
-      paths-to-match: '/api/**/members/**'
-    - group: 'products'
-      display-name: '🛍️ Products API'
-      paths-to-match: '/api/**/products/**'
-    - group: 'admin'
-      display-name: '⚙️ Admin API'
-      paths-to-match: '/api/**/admin/**'
+  # 패키지 스캔 설정 (OpenApiConfig.java의 @Bean GroupedOpenApi 사용)
   packages-to-scan: com.skax.core
   paths-to-match: /api/**
 

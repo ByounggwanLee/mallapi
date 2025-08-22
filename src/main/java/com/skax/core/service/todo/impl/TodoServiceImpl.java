@@ -278,15 +278,26 @@ public class TodoServiceImpl implements TodoService {
         if (pageable.getSort().isSorted()) {
             List<Sort.Order> validOrders = new ArrayList<>();
             
+            log.debug("정렬 파라미터 디버깅 - pageable.getSort(): {}", pageable.getSort());
+            log.debug("정렬 파라미터 디버깅 - pageable.getSort().toString(): {}", pageable.getSort().toString());
+            
             for (Sort.Order order : pageable.getSort()) {
                 String property = order.getProperty();
                 
+                log.debug("정렬 필드 검증 - property: '{}', direction: {}", property, order.getDirection());
+                
+                // 잘못된 JSON 형태의 정렬 파라미터 정리
+                String cleanProperty = cleanSortProperty(property);
+                log.debug("정리된 정렬 필드: '{}' -> '{}'", property, cleanProperty);
+                
                 // 허용된 필드인지 확인
-                if (java.util.Arrays.asList(ALLOWED_SORT_FIELDS).contains(property)) {
-                    validOrders.add(order);
-                    log.debug("유효한 정렬 필드 적용: {} {}", property, order.getDirection());
+                if (java.util.Arrays.asList(ALLOWED_SORT_FIELDS).contains(cleanProperty)) {
+                    // 정리된 프로퍼티로 새로운 Order 생성
+                    Sort.Order cleanOrder = new Sort.Order(order.getDirection(), cleanProperty);
+                    validOrders.add(cleanOrder);
+                    log.debug("유효한 정렬 필드 적용: {} {}", cleanProperty, order.getDirection());
                 } else {
-                    log.warn("허용되지 않은 정렬 필드 무시: {}", property);
+                    log.warn("허용되지 않은 정렬 필드 무시: '{}' (원본: '{}')", cleanProperty, property);
                 }
             }
             
@@ -300,5 +311,53 @@ public class TodoServiceImpl implements TodoService {
                 pageable.getPageSize(),
                 validatedSort
         );
+    }
+
+    /**
+     * 잘못된 형태의 정렬 파라미터를 정리합니다.
+     * Swagger UI에서 전송되는 JSON 형태의 파라미터를 올바른 필드명으로 변환합니다.
+     * 
+     * @param property 원본 정렬 프로퍼티 (예: '["string"', '"title"]')
+     * @return 정리된 정렬 프로퍼티 (예: 'title')
+     */
+    private String cleanSortProperty(String property) {
+        if (property == null || property.trim().isEmpty()) {
+            return "";
+        }
+        
+        String original = property;
+        String cleaned = property.trim();
+        
+        // Swagger UI에서 오는 잘못된 JSON 형태 패턴들 처리
+        // 예: '["string"' -> 'string', '"title"]' -> 'title'
+        
+        // 1. 대괄호와 따옴표 조합 제거
+        cleaned = cleaned.replaceAll("^\\[\"", "")           // 시작 [" 제거
+                        .replaceAll("\"\\]$", "")            // 끝 "] 제거
+                        .replaceAll("^\"|\"$", "")           // 시작/끝 따옴표 제거
+                        .replaceAll("^\\[|\\]$", "")         // 시작/끝 대괄호 제거
+                        
+        // 2. JSON 객체 형태 패턴 제거 (예: "string": ASC에서 string 추출)
+                        .replaceAll("\"\\s*:\\s*[A-Z]+", "") // ": ASC" 또는 ": DESC" 패턴 제거
+                        .replaceAll(":\\s*[A-Z]+", "")       // ": ASC" 패턴 제거
+                        
+        // 3. 쉼표와 기타 특수문자 제거
+                        .replaceAll(",$", "")                // 끝 쉼표 제거
+                        .replaceAll("^,", "")                // 시작 쉼표 제거
+                        
+        // 4. 최종 정리
+                        .trim();
+        
+        // 빈 문자열이거나 특수문자만 있는 경우 처리
+        if (cleaned.isEmpty() || cleaned.matches("[^a-zA-Z0-9_]+")) {
+            log.warn("정렬 파라미터 정리 실패 - 원본: '{}', 정리 후: '{}'", original, cleaned);
+            return "";
+        }
+        
+        // 유효한 필드명만 허용 (영문자, 숫자, 언더스코어)
+        cleaned = cleaned.replaceAll("[^a-zA-Z0-9_]", "");
+        
+        log.debug("정렬 파라미터 정리 완료 - 원본: '{}' -> 정리: '{}'", original, cleaned);
+        return cleaned;
     }
 }
