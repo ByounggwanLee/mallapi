@@ -6,15 +6,26 @@ import com.skax.core.dto.todo.response.TodoResponse;
 import com.skax.core.common.response.PageResponse;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
- * 할일 관리 서비스 인터페이스
+ * Todo 관리 서비스 인터페이스
  * 
- * <p>할일의 생성, 조회, 수정, 삭제 등의 비즈니스 로직을 정의합니다.</p>
+ * <p>Todo의 생성, 조회, 수정, 삭제 등의 비즈니스 로직을 정의합니다.</p>
+ * 
+ * <p>주요 기능:</p>
+ * <ul>
+ *   <li>Todo 등록, 수정, 삭제 (논리적 삭제)</li>
+ *   <li>Todo 목록 조회 (페이징)</li>
+ *   <li>제목, 내용 기반 검색</li>
+ *   <li>완료 상태별 조회</li>
+ *   <li>날짜별 조회</li>
+ *   <li>Todo 통계 정보</li>
+ * </ul>
  * 
  * @author ByounggwanLee
- * @since 2025-08-19
+ * @since 2025-08-23
  * @version 1.0
  */
 public interface TodoService {

@@ -1,122 +1,142 @@
 package com.skax.core.entity.todo;
 
+import java.time.LocalDate;
+
 import com.skax.core.entity.BaseEntity;
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
  * 할일 정보를 나타내는 엔티티 클래스
  * 
- * <p>사용자의 할일 목록을 관리합니다.</p>
+ * <p>사용자의 할일 목록을 관리하며, 다음과 같은 정보를 포함합니다:</p>
+ * <ul>
+ *   <li>할일 고유 번호 (tno)</li>
+ *   <li>할일 제목 (title)</li>
+ *   <li>작성자 (writer)</li>
+ *   <li>완료 여부 (complete)</li>
+ *   <li>마감일 (dueDate)</li>
+ * </ul>
+ * 
+ * <p>할일의 생성, 수정, 완료 처리 등의 기능을 제공합니다.</p>
  * 
  * @author ByounggwanLee
  * @since 2025-08-19
  * @version 1.0
  */
 @Entity
-@Table(name = "todos", indexes = {
-    @Index(name = "idx_todo_writer", columnList = "writer"),
-    @Index(name = "idx_todo_complete", columnList = "complete"),
-    @Index(name = "idx_todo_writer_complete", columnList = "writer, complete")
-})
+@Table(name = "tbl_todo")
 @Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@ToString
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
 public class Todo extends BaseEntity {
 
     /**
-     * 할일 번호 (PK)
+     * 할일 고유 식별자
+     * 데이터베이스에서 자동으로 생성되는 기본키입니다.
      */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "tno")
     private Long tno;
 
     /**
-     * 제목
+     * 할일 제목
+     * 사용자가 입력한 할일의 제목을 나타냅니다.
      */
-    @Column(name = "title", nullable = false, length = 256)
     private String title;
 
     /**
-     * 작성자
+     * 할일 작성자
+     * 할일을 생성한 사용자의 이름 또는 식별자를 나타냅니다.
      */
-    @Column(name = "writer", nullable = false, length = 256)
     private String writer;
 
     /**
-     * 완료 여부
+     * 할일 완료 여부
+     * true: 완료, false: 미완료를 나타냅니다.
      */
-    @Column(name = "complete", nullable = false)
-    @Builder.Default
-    private Boolean complete = false;
+    private boolean complete;
 
     /**
-     * 할일 완료 처리
+     * 할일 마감일
+     * 할일을 완료해야 하는 날짜를 나타냅니다.
      */
-    public void markAsCompleted() {
-        this.complete = true;
+    private LocalDate dueDate;
+
+    /**
+     * 할일 제목을 변경합니다.
+     * 
+     * @param title 새로운 할일 제목
+     * @throws IllegalArgumentException title이 null이거나 빈 문자열인 경우
+     */
+    public void changeTitle(String title) {
+        this.title = title;
     }
 
     /**
-     * 할일 미완료 처리
+     * 할일 완료 상태를 변경합니다.
+     * 
+     * @param complete 완료 여부 (true: 완료, false: 미완료)
      */
-    public void markAsIncomplete() {
-        this.complete = false;
+    public void changeComplete(boolean complete) {
+        this.complete = complete;
     }
 
     /**
-     * 할일 제목 수정
+     * 할일 마감일을 변경합니다.
+     * 
+     * @param dueDate 새로운 마감일
+     */
+    public void changeDueDate(LocalDate dueDate) {
+        this.dueDate = dueDate;
+    }
+
+    /**
+     * 할일 정보를 업데이트합니다.
      * 
      * @param title 새로운 제목
-     */
-    public void updateTitle(String title) {
-        if (title != null && !title.trim().isEmpty()) {
-            this.title = title.trim();
-        }
-    }
-
-    /**
-     * 작성자 수정
-     * 
      * @param writer 새로운 작성자
+     * @param complete 새로운 완료 상태
      */
-    public void updateWriter(String writer) {
-        if (writer != null && !writer.trim().isEmpty()) {
-            this.writer = writer.trim();
+    public void updateTodo(String title, String writer, Boolean complete) {
+        if (title != null) {
+            this.title = title;
+        }
+        if (writer != null) {
+            this.writer = writer;
+        }
+        if (complete != null) {
+            this.complete = complete;
         }
     }
 
     /**
-     * 완료 상태 토글
+     * 할일 완료 상태를 토글합니다.
      */
     public void toggleComplete() {
         this.complete = !this.complete;
     }
 
     /**
-     * 할일이 완료되었는지 확인
+     * 할일 완료 상태를 반환합니다.
      * 
-     * @return 완료 여부
+     * @return 완료 상태 (true: 완료, false: 미완료)
      */
-    public boolean isCompleted() {
-        return Boolean.TRUE.equals(this.complete);
+    public Boolean getComplete() {
+        return this.complete;
     }
 
-    /**
-     * 할일 전체 정보 업데이트
-     * 
-     * @param title 제목
-     * @param writer 작성자
-     * @param complete 완료 여부
-     */
-    public void updateTodo(String title, String writer, Boolean complete) {
-        updateTitle(title);
-        updateWriter(writer);
-        if (complete != null) {
-            this.complete = complete;
-        }
-    }
 }

@@ -12,7 +12,19 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * 할일 정보 접근을 위한 Repository 인터페이스
+ * Todo 엔티티에 대한 데이터 액세스 계층 인터페이스
+ * 
+ * <p>할일 데이터의 생성, 조회, 수정, 삭제 등의 데이터베이스 작업을 처리합니다.</p>
+ * 
+ * <p>제공하는 주요 기능:</p>
+ * <ul>
+ *   <li>기본 CRUD 작업</li>
+ *   <li>작성자별 할일 조회</li>
+ *   <li>완료 상태별 할일 조회</li>
+ *   <li>제목 검색 기능</li>
+ *   <li>복합 조건 검색</li>
+ *   <li>페이징 처리</li>
+ * </ul>
  * 
  * @author ByounggwanLee
  * @since 2025-08-19

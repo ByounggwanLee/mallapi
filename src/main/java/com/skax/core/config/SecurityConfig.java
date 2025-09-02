@@ -9,6 +9,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
@@ -205,5 +207,16 @@ public class SecurityConfig {
         log.info("CORS 설정 완료 - Allowed Origins: {}", configuration.getAllowedOrigins());
         
         return source;
+    }
+
+    /**
+     * 비밀번호 암호화를 위한 PasswordEncoder 빈 설정
+     * 
+     * @return BCryptPasswordEncoder 인스턴스
+     */
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        log.info("PasswordEncoder 빈 생성 - BCryptPasswordEncoder 사용");
+        return new BCryptPasswordEncoder();
     }
 }

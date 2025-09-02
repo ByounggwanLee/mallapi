@@ -52,9 +52,12 @@ public class OpenApiConfig {
                     new Server().url(externalUrl).description("운영 서버")
                 ))
                 .tags(List.of(
-                    new Tag().name("Samples").description("샘플 API - 기본 샘플 데이터 관리"),
+                    new Tag().name("Members").description("회원 API - 회원 정보 관리"),
+                    new Tag().name("Products").description("상품 API - 상품 정보 관리"),
+                    new Tag().name("Carts").description("장바구니 API - 장바구니 및 아이템 관리"),
+                    new Tag().name("Roles").description("역할 API - 사용자 권한 관리"),
                     new Tag().name("Todos").description("할 일 API - Todo 작업 관리"),
-                    new Tag().name("Roles").description("역할 API - 사용자 권한 관리")
+                    new Tag().name("Samples").description("샘플 API - 기본 샘플 데이터 관리")
                 ))
                 .components(new Components()
                     // JWT Bearer 인증만 포함
@@ -81,15 +84,22 @@ public class OpenApiConfig {
                         
                         ## 🚀 주요 기능
                         
+                        - **회원 관리**: 회원 가입, 로그인, 정보 수정, 권한 관리
+                        - **상품 관리**: 상품 등록, 조회, 수정, 삭제, 검색
+                        - **장바구니 관리**: 장바구니 아이템 추가, 수정, 삭제, 총액 계산
+                        - **역할 관리**: 사용자 권한 생성, 수정, 삭제, 기본 역할 설정
                         - **Todo 관리**: 할 일 생성, 조회, 수정, 삭제
                         - **샘플 관리**: 기본 샘플 데이터 관리
-                        - **권한 관리**: 역할 기반 접근 제어
                         
                         ## 📋 API 그룹 안내
                         
                         - **🌐 전체 API**: 모든 API 엔드포인트
-                        - **📋 Samples API**: 샘플 데이터 관리
+                        - **� Members API**: 회원 정보 관리
+                        - **🛍️ Products API**: 상품 정보 관리
+                        - **🛒 Carts API**: 장바구니 및 아이템 관리
+                        - **🔐 Roles API**: 사용자 권한 관리
                         - **✅ Todos API**: 할 일 관리
+                        - **📋 Samples API**: 샘플 데이터 관리
                         - **🌍 Public API**: 인증 불요 공개 API
                         
                         ## 📝 응답 형식 표준화 (AxResponse)
@@ -230,6 +240,66 @@ public class OpenApiConfig {
                 .group("all")
                 .displayName("🌐 전체 API")
                 .pathsToMatch("/api/**")
+                .build();
+    }
+
+    /**
+     * Members API 그룹 설정
+     * 
+     * @return Members API 그룹 설정
+     */
+    @Bean
+    public GroupedOpenApi membersApi() {
+        return GroupedOpenApi.builder()
+                .group("members")
+                .displayName("👥 Members API")
+                .pathsToMatch("/api/**/members/**")
+                .packagesToScan("com.skax.core.controller.member")
+                .build();
+    }
+
+    /**
+     * Products API 그룹 설정
+     * 
+     * @return Products API 그룹 설정
+     */
+    @Bean
+    public GroupedOpenApi productsApi() {
+        return GroupedOpenApi.builder()
+                .group("products")
+                .displayName("🛍️ Products API")
+                .pathsToMatch("/api/**/products/**")
+                .packagesToScan("com.skax.core.controller.product")
+                .build();
+    }
+
+    /**
+     * Carts API 그룹 설정
+     * 
+     * @return Carts API 그룹 설정
+     */
+    @Bean
+    public GroupedOpenApi cartsApi() {
+        return GroupedOpenApi.builder()
+                .group("carts")
+                .displayName("🛒 Carts API")
+                .pathsToMatch("/api/**/carts/**")
+                .packagesToScan("com.skax.core.controller.cart")
+                .build();
+    }
+
+    /**
+     * Roles API 그룹 설정
+     * 
+     * @return Roles API 그룹 설정
+     */
+    @Bean
+    public GroupedOpenApi rolesApi() {
+        return GroupedOpenApi.builder()
+                .group("roles")
+                .displayName("🔐 Roles API")
+                .pathsToMatch("/api/**/roles/**")
+                .packagesToScan("com.skax.core.controller.role")
                 .build();
     }
 

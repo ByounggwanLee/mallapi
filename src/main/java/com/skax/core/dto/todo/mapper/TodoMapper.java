@@ -29,6 +29,7 @@ public interface TodoMapper {
      * @return Todo 엔티티
      */
     @Mapping(target = "tno", ignore = true)
+    @Mapping(target = "dueDate", ignore = true)
     Todo toEntity(TodoCreateRequest request);
 
     /**
@@ -46,7 +47,6 @@ public interface TodoMapper {
      * @param todo 수정할 Todo 엔티티
      */
     @Mapping(target = "tno", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "dueDate", ignore = true)
     void updateEntity(TodoUpdateRequest request, @MappingTarget Todo todo);
 }
