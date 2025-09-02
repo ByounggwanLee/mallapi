@@ -35,8 +35,6 @@ public interface CartMapper {
     @Mapping(target = "items", ignore = true)  // 별도로 처리
     @Mapping(target = "totalItemCount", ignore = true)  // 별도로 계산
     @Mapping(target = "totalAmount", ignore = true)  // 별도로 계산
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
     CartResponse toResponse(Cart cart);
 
     /**
@@ -53,8 +51,6 @@ public interface CartMapper {
     @Mapping(target = "productImage", ignore = true)
     @Mapping(target = "quantity", source = "qty")
     @Mapping(target = "totalPrice", expression = "java(cartItem.getQty() * cartItem.getProduct().getPrice())")
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
     CartItemResponse toItemResponse(CartItem cartItem);
 
     /**

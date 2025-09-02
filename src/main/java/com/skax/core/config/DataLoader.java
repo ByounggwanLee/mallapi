@@ -14,10 +14,14 @@ import com.skax.core.repository.todo.TodoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
@@ -27,15 +31,23 @@ import java.util.Random;
  * <p>프로젝트 시작 시 모든 엔티티별로 테스트 데이터 100건을 자동으로 생성합니다.</p>
  * <ul>
  *   <li>Member: 100건 (일반 회원 + 소셜 로그인 회원)</li>
- *   <li>Product: 100건 (다양한 카테고리, 가격대)</li>
+ *   <li>Product: 100건 (다양한 카테고리, 가격대, BaseEntity 기반 감사 정보 포함)</li>
  *   <li>Cart: 회원별 장바구니 자동 생성</li>
- *   <li>CartItem: 100건 (장바구니 상품)</li>
+ *   <li>CartItem: 100건 (활성 상품만 사용하여 장바구니 아이템 생성)</li>
  *   <li>Todo: 100건 (기존 50건에서 확장)</li>
+ * </ul>
+ * 
+ * <p><strong>주요 특징:</strong></p>
+ * <ul>
+ *   <li>BaseEntity 기반 통합 감사 시스템 활용</li>
+ *   <li>논리적 삭제(soft delete) 기능 테스트를 위한 일부 데이터 삭제 처리</li>
+ *   <li>다양한 사용자 컨텍스트로 생성자/수정자 정보 다양화</li>
+ *   <li>활성 상품만을 사용한 장바구니 아이템 생성으로 데이터 무결성 보장</li>
  * </ul>
  * 
  * @author ByounggwanLee
  * @since 2025-08-23
- * @version 2.0
+ * @version 3.0
  */
 @Slf4j
 @Component
@@ -174,14 +186,53 @@ public class DataLoader implements CommandLineRunner {
     public void run(String... args) throws Exception {
         log.info("=== 엔티티별 테스트 데이터 로딩 시작 ===");
         
-        // 각 엔티티별로 데이터 생성
-        createMemberTestData();
-        createProductTestData();
-        createCartTestData();
-        createCartItemTestData();
-        createTodoTestData();
+        // 시스템 사용자로 SecurityContext 설정 (audit 정보 자동 입력을 위함)
+        setupSystemUserContext();
+        
+        try {
+            // 각 엔티티별로 데이터 생성
+            createMemberTestData();
+            createProductTestData();
+            createCartTestData();
+            createCartItemTestData();
+            createTodoTestData();
+        } finally {
+            // SecurityContext 정리
+            SecurityContextHolder.clearContext();
+        }
         
         log.info("=== 모든 엔티티 테스트 데이터 로딩 완료 ===");
+    }
+
+    /**
+     * 시스템 사용자 인증 컨텍스트를 설정합니다.
+     * BaseEntity의 audit 정보가 자동으로 입력되도록 합니다.
+     */
+    private void setupSystemUserContext() {
+        // 시스템 사용자 확인 또는 생성
+        Member systemUser = memberRepository.findByEmail("system@admin.com")
+                .orElseGet(() -> {
+                    log.info("시스템 사용자 생성 중...");
+                    Member newSystemUser = Member.builder()
+                            .email("system@admin.com")
+                            .nickname("시스템관리자")
+                            .pw(passwordEncoder.encode("system123!"))
+                            .social(false)
+                            .isActive(true)
+                            .build();
+                    newSystemUser.addRole(MemberRole.ADMIN);
+                    return memberRepository.save(newSystemUser);
+                });
+
+        // SecurityContext에 시스템 사용자 설정
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                systemUser.getEmail(), 
+                null, 
+                Collections.singletonList(new SimpleGrantedAuthority("ROLE_ADMIN"))
+        );
+        SecurityContextHolder.getContext().setAuthentication(auth);
+        
+        log.info("시스템 사용자 인증 컨텍스트 설정 완료: {}", systemUser.getEmail());
     }
 
     /**
@@ -251,7 +302,40 @@ public class DataLoader implements CommandLineRunner {
     }
 
     /**
+     * 다양한 사용자로 인증 컨텍스트를 변경합니다.
+     * BaseEntity의 audit 정보에 다양한 생성자/수정자가 기록되도록 합니다.
+     */
+    private void changeAuthenticationContext() {
+        List<Member> activeMembers = memberRepository.findAll().stream()
+                .filter(Member::getIsActive)
+                .filter(m -> !m.isSocial()) // 소셜 로그인 사용자 제외
+                .toList();
+        
+        if (!activeMembers.isEmpty()) {
+            Member randomMember = activeMembers.get(random.nextInt(activeMembers.size()));
+            
+            // SecurityContext에 랜덤 사용자 설정
+            UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                    randomMember.getEmail(), 
+                    null, 
+                    Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
+            );
+            SecurityContextHolder.getContext().setAuthentication(auth);
+            
+            log.debug("인증 컨텍스트 변경: {}", randomMember.getEmail());
+        }
+    }
+
+    /**
      * Product 테스트 데이터 100건을 생성합니다.
+     * 
+     * <p>BaseEntity 기반 감사 시스템을 활용하여 다양한 생성자/수정자 정보가 기록되도록 합니다.</p>
+     * <ul>
+     *   <li>다양한 카테고리와 가격대의 상품 생성</li>
+     *   <li>각 상품마다 1~3개의 이미지 파일 추가</li>
+     *   <li>10% 확률로 논리적 삭제 처리 (BaseEntity.deleted = true)</li>
+     *   <li>생성자/수정자 정보 다양화를 위한 인증 컨텍스트 변경</li>
+     * </ul>
      */
     private void createProductTestData() {
         long existingCount = productRepository.count();
@@ -266,6 +350,11 @@ public class DataLoader implements CommandLineRunner {
         List<Product> products = new ArrayList<>();
         
         for (int i = 0; i < 100; i++) {
+            // 각 상품마다 다른 사용자가 생성자로 설정되도록 인증 컨텍스트 변경
+            if (i % 10 == 0) {
+                changeAuthenticationContext();
+            }
+            
             String category = PRODUCT_CATEGORIES[random.nextInt(PRODUCT_CATEGORIES.length)];
             String prefix = PRODUCT_NAME_PREFIXES[random.nextInt(PRODUCT_NAME_PREFIXES.length)];
             String name = PRODUCT_NAMES[random.nextInt(PRODUCT_NAMES.length)];
@@ -282,7 +371,6 @@ public class DataLoader implements CommandLineRunner {
                     .price(price)
                     .pdesc(description)
                     .category(category)
-                    .delFlag(random.nextDouble() < 0.1) // 10% 삭제된 상품
                     .build();
             
             // 랜덤하게 1~3개의 상품 이미지 추가
@@ -294,27 +382,54 @@ public class DataLoader implements CommandLineRunner {
             products.add(product);
         }
         
+        // Product 일괄 저장
         List<Product> savedProducts = productRepository.saveAll(products);
         log.info("총 {}건의 Product 데이터가 생성되었습니다.", savedProducts.size());
         
-        // 카테고리별 통계
-        savedProducts.stream()
+        // 일부 상품을 논리적 삭제 처리 (BaseEntity.deleted 사용)
+        List<Product> productsToDelete = new ArrayList<>();
+        for (Product product : savedProducts) {
+            // 10% 확률로 논리적 삭제 처리
+            if (random.nextDouble() < 0.1) {
+                changeAuthenticationContext(); // 삭제자 정보를 위한 인증 컨텍스트 변경
+                product.softDelete(); // BaseEntity의 softDelete() 메서드 사용
+                productsToDelete.add(product);
+            }
+        }
+        
+        if (!productsToDelete.isEmpty()) {
+            productRepository.saveAll(productsToDelete);
+            log.info("{}건의 Product가 논리적 삭제 처리되었습니다.", productsToDelete.size());
+        }
+        log.info("총 {}건의 Product 데이터가 생성되었습니다.", savedProducts.size());
+        
+        // 활성 상품 기준 카테고리별 통계
+        List<Product> activeProducts = savedProducts.stream()
+                .filter(p -> !p.isDeleted()) // BaseEntity.deleted 필드 사용
+                .toList();
+        
+        activeProducts.stream()
                 .collect(java.util.stream.Collectors.groupingBy(
                         Product::getCategory,
                         java.util.stream.Collectors.counting()))
                 .entrySet().stream()
                 .sorted(java.util.Map.Entry.<String, Long>comparingByValue().reversed())
                 .limit(5)
-                .forEach(entry -> log.info("  - {}: {}건", entry.getKey(), entry.getValue()));
+                .forEach(entry -> log.info("  - 활성 상품 카테고리 {}: {}건", entry.getKey(), entry.getValue()));
         
-        // 가격대별 통계
-        long under10k = savedProducts.stream().mapToLong(p -> p.getPrice() < 10000 ? 1 : 0).sum();
-        long under50k = savedProducts.stream().mapToLong(p -> p.getPrice() >= 10000 && p.getPrice() < 50000 ? 1 : 0).sum();
-        long under100k = savedProducts.stream().mapToLong(p -> p.getPrice() >= 50000 && p.getPrice() < 100000 ? 1 : 0).sum();
-        long over100k = savedProducts.stream().mapToLong(p -> p.getPrice() >= 100000 ? 1 : 0).sum();
+        // 활성 상품 기준 가격대별 통계
+        long under10k = activeProducts.stream().mapToLong(p -> p.getPrice() < 10000 ? 1 : 0).sum();
+        long under50k = activeProducts.stream().mapToLong(p -> p.getPrice() >= 10000 && p.getPrice() < 50000 ? 1 : 0).sum();
+        long under100k = activeProducts.stream().mapToLong(p -> p.getPrice() >= 50000 && p.getPrice() < 100000 ? 1 : 0).sum();
+        long over100k = activeProducts.stream().mapToLong(p -> p.getPrice() >= 100000 ? 1 : 0).sum();
         
-        log.info("가격대별 분포: 1만원 미만({}건), 1-5만원({}건), 5-10만원({}건), 10만원 이상({}건)", 
+        log.info("활성 상품 가격대별 분포: 1만원 미만({}건), 1-5만원({}건), 5-10만원({}건), 10만원 이상({}건)", 
                  under10k, under50k, under100k, over100k);
+        
+        // 전체 통계 요약
+        long deletedCount = savedProducts.stream().mapToLong(p -> p.isDeleted() ? 1 : 0).sum();
+        log.info("상품 생성 완료 - 전체: {}건, 활성: {}건, 삭제: {}건", 
+                 savedProducts.size(), activeProducts.size(), deletedCount);
     }
 
     /**
@@ -343,13 +458,20 @@ public class DataLoader implements CommandLineRunner {
         List<Cart> carts = new ArrayList<>();
         
         // 활성 회원의 70%에게만 장바구니 생성
+        int memberIndex = 0;
         for (Member member : activeMembers) {
+            // 일정 간격으로 인증 컨텍스트 변경
+            if (memberIndex % 8 == 0) {
+                changeAuthenticationContext();
+            }
+            
             if (random.nextDouble() < 0.7) {
                 Cart cart = Cart.builder()
                         .owner(member)
                         .build();
                 carts.add(cart);
             }
+            memberIndex++;
         }
         
         List<Cart> savedCarts = cartRepository.saveAll(carts);
@@ -369,7 +491,8 @@ public class DataLoader implements CommandLineRunner {
         }
 
         List<Cart> carts = cartRepository.findAll();
-        List<Product> activeProducts = productRepository.findByDelFlagFalse();
+        // BaseEntity.deleted = false인 활성 상품만 조회 (논리적 삭제된 상품 제외)
+        List<Product> activeProducts = productRepository.findByDeletedFalse();
         
         if (carts.isEmpty() || activeProducts.isEmpty()) {
             log.warn("Cart({})나 활성 Product({})가 없어 CartItem 데이터를 생성할 수 없습니다.", 
@@ -381,6 +504,11 @@ public class DataLoader implements CommandLineRunner {
         List<CartItem> cartItems = new ArrayList<>();
         
         for (int i = 0; i < 100; i++) {
+            // 장바구니 아이템마다 다른 사용자가 생성자로 설정되도록 인증 컨텍스트 변경
+            if (i % 7 == 0) {
+                changeAuthenticationContext();
+            }
+            
             Cart cart = carts.get(random.nextInt(carts.size()));
             Product product = activeProducts.get(random.nextInt(activeProducts.size()));
             int quantity = random.nextInt(5) + 1; // 1~5개
@@ -424,6 +552,11 @@ public class DataLoader implements CommandLineRunner {
         List<Todo> todos = new ArrayList<>();
         
         for (int i = 0; i < 100; i++) {
+            // 각 할일마다 다른 사용자가 생성자로 설정되도록 인증 컨텍스트 변경
+            if (i % 5 == 0) {
+                changeAuthenticationContext();
+            }
+            
             String title = TODO_TITLES[i % TODO_TITLES.length];
             String author = AUTHORS[random.nextInt(AUTHORS.length)];
             boolean isComplete = random.nextBoolean(); // 랜덤하게 완료/미완료 설정

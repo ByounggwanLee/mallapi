@@ -1,12 +1,12 @@
 package com.skax.core.service.member.impl;
 
 import com.skax.core.common.response.PageResponse;
+import com.skax.core.util.ServiceUtils;
 import com.skax.core.dto.member.request.MemberCreateRequest;
 import com.skax.core.dto.member.request.MemberUpdateRequest;
 import com.skax.core.dto.member.response.MemberResponse;
 import com.skax.core.entity.member.Member;
 import com.skax.core.entity.member.MemberRole;
-import com.skax.core.dto.member.mapper.MemberMapper;
 import com.skax.core.repository.member.MemberRepository;
 import com.skax.core.service.member.MemberService;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +16,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.stream.Collectors;
+import java.util.Set;
 
 /**
  * 회원 관리 서비스 구현체
@@ -33,8 +36,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class MemberServiceImpl implements MemberService {
 
     private final MemberRepository memberRepository;
-    private final MemberMapper memberMapper;
     private final PasswordEncoder passwordEncoder;
+    private final ServiceUtils serviceUtils;
 
     @Override
     @Transactional
@@ -54,14 +57,15 @@ public class MemberServiceImpl implements MemberService {
         }
         
         // Entity 변환 및 비밀번호 암호화
-        Member member = memberMapper.toEntity(request);
+        Member member = convertToEntity(request);
         member.changePw(passwordEncoder.encode(request.getPassword()));
         
         // 회원 저장
         Member savedMember = memberRepository.save(member);
         log.info("Successfully created member with id: {}", savedMember.getEmail());
         
-        return memberMapper.toResponse(savedMember);
+        MemberResponse response = convertToResponse(savedMember);
+        return serviceUtils.mapWithAudit(savedMember, response);
     }
 
     @Override
@@ -71,7 +75,45 @@ public class MemberServiceImpl implements MemberService {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다: " + email));
         
-        return memberMapper.toResponse(member);
+        MemberResponse response = convertToResponse(member);
+        return serviceUtils.mapWithAudit(member, response);
+    }
+
+    /**
+     * MemberCreateRequest를 Member 엔티티로 변환합니다.
+     */
+    private Member convertToEntity(MemberCreateRequest request) {
+        return Member.builder()
+                .email(request.getEmail())
+                .nickname(request.getNickname())
+                .social(request.isSocial())
+                .isActive(true)
+                .build();
+    }
+
+    /**
+     * Member 엔티티를 MemberResponse로 변환합니다.
+     */
+    private MemberResponse convertToResponse(Member member) {
+        return MemberResponse.builder()
+                .email(member.getEmail())
+                .name(member.getNickname())
+                .isActive(member.getIsActive())
+                .roles(member.getMemberRoleList() != null 
+                    ? member.getMemberRoleList().stream()
+                        .map(MemberRole::name)
+                        .collect(Collectors.toSet()) 
+                    : Set.of())
+                .build();
+    }
+
+    /**
+     * MemberUpdateRequest의 값으로 Member 엔티티를 업데이트합니다.
+     */
+    private void updateMemberFromRequest(MemberUpdateRequest request, Member member) {
+        if (request.getName() != null) {
+            member.changeNickname(request.getName());
+        }
     }
 
     @Override
@@ -83,12 +125,13 @@ public class MemberServiceImpl implements MemberService {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다: " + email));
         
         // 엔티티 업데이트
-        memberMapper.updateFromRequest(request, member);
+        updateMemberFromRequest(request, member);
         
         Member updatedMember = memberRepository.save(member);
         log.info("Successfully updated member with email: {}", email);
         
-        return memberMapper.toResponse(updatedMember);
+        MemberResponse response = convertToResponse(updatedMember);
+        return serviceUtils.mapWithAudit(updatedMember, response);
     }
 
     @Override
@@ -110,7 +153,10 @@ public class MemberServiceImpl implements MemberService {
                 pageable.getPageNumber(), pageable.getPageSize());
         
         Page<Member> memberPage = memberRepository.findAll(pageable);
-        Page<MemberResponse> responsePage = memberPage.map(memberMapper::toResponse);
+        Page<MemberResponse> responsePage = memberPage.map(member -> {
+            MemberResponse response = convertToResponse(member);
+            return serviceUtils.mapWithAudit(member, response);
+        });
         
         return PageResponse.from(responsePage);
     }
@@ -121,7 +167,10 @@ public class MemberServiceImpl implements MemberService {
                 nickname, pageable.getPageNumber(), pageable.getPageSize());
         
         Page<Member> memberPage = memberRepository.findByNicknameContainingIgnoreCase(nickname, pageable);
-        Page<MemberResponse> responsePage = memberPage.map(memberMapper::toResponse);
+        Page<MemberResponse> responsePage = memberPage.map(member -> {
+            MemberResponse response = convertToResponse(member);
+            return serviceUtils.mapWithAudit(member, response);
+        });
         
         return PageResponse.from(responsePage);
     }
@@ -132,7 +181,10 @@ public class MemberServiceImpl implements MemberService {
                 social, pageable.getPageNumber(), pageable.getPageSize());
         
         Page<Member> memberPage = memberRepository.findBySocial(social, pageable);
-        Page<MemberResponse> responsePage = memberPage.map(memberMapper::toResponse);
+        Page<MemberResponse> responsePage = memberPage.map(member -> {
+            MemberResponse response = convertToResponse(member);
+            return serviceUtils.mapWithAudit(member, response);
+        });
         
         return PageResponse.from(responsePage);
     }

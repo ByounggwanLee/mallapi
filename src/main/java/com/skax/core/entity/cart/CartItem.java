@@ -1,7 +1,9 @@
 package com.skax.core.entity.cart;
 
+import com.skax.core.entity.BaseEntity;
 import com.skax.core.entity.product.Product;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -14,6 +16,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
  * 장바구니 아이템 정보를 나타내는 엔티티 클래스
@@ -42,7 +45,8 @@ import lombok.ToString;
     @Index(columnList = "cart_cno", name = "idx_cartitem_cart"),
     @Index(columnList = "product_pno, cart_cno", name = "idx_cartitem_pno_cart")
 })
-public class CartItem {
+@EntityListeners(AuditingEntityListener.class)
+public class CartItem extends BaseEntity {
 
   /**
    * 장바구니 아이템 고유 식별자

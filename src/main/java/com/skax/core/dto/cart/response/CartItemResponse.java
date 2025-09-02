@@ -1,12 +1,12 @@
 package com.skax.core.dto.cart.response;
 
+import com.skax.core.dto.BaseDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
 
 /**
  * 장바구니 아이템 응답 DTO
@@ -18,11 +18,12 @@ import java.time.LocalDateTime;
  * @version 1.0
  */
 @Data
+@EqualsAndHashCode(callSuper = false)
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(description = "장바구니 아이템 응답")
-public class CartItemResponse {
+public class CartItemResponse extends BaseDto {
 
     /**
      * 장바구니 아이템 번호
@@ -71,16 +72,4 @@ public class CartItemResponse {
      */
     @Schema(description = "총 가격", example = "2580000")
     private Integer totalPrice;
-
-    /**
-     * 생성 시간
-     */
-    @Schema(description = "생성 시간", example = "2025-08-23T10:30:00")
-    private LocalDateTime createdAt;
-
-    /**
-     * 수정 시간
-     */
-    @Schema(description = "수정 시간", example = "2025-08-23T15:45:00")
-    private LocalDateTime updatedAt;
 }

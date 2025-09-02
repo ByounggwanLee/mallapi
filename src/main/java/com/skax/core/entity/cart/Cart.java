@@ -1,8 +1,10 @@
 package com.skax.core.entity.cart;
 
+import com.skax.core.entity.BaseEntity;
 import com.skax.core.entity.member.Member;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -15,6 +17,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
  * 장바구니 정보를 나타내는 엔티티 클래스
@@ -38,7 +41,8 @@ import lombok.ToString;
 @Getter
 @ToString(exclude = "owner")
 @Table(name = "tbl_cart", indexes = { @Index(name = "idx_cart_email", columnList = "member_owner") })
-public class Cart {
+@EntityListeners(AuditingEntityListener.class)
+public class Cart extends BaseEntity {
 
     /**
      * 장바구니 고유 식별자

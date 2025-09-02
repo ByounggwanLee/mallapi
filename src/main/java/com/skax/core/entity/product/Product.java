@@ -3,8 +3,10 @@ package com.skax.core.entity.product;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.skax.core.entity.BaseEntity;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -14,6 +16,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
  * 상품 정보를 나타내는 엔티티 클래스
@@ -24,8 +27,8 @@ import lombok.ToString;
  *   <li>상품명 (pname)</li>
  *   <li>가격 (price)</li>
  *   <li>상품 설명 (pdesc)</li>
- *   <li>삭제 플래그 (delFlag)</li>
  *   <li>상품 이미지 목록 (imageList)</li>
+ *   <li>삭제 플래그 (BaseEntity의 deleted 사용)</li>
  * </ul>
  * 
  * <p>상품의 가격 변경, 삭제 상태 변경 등의 비즈니스 로직을 포함합니다.</p>
@@ -41,7 +44,8 @@ import lombok.ToString;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class Product {
+@EntityListeners(AuditingEntityListener.class)
+public class Product extends BaseEntity {
 
     /**
      * 상품 고유 식별자
@@ -74,22 +78,6 @@ public class Product {
      * 상품이 속한 카테고리 정보입니다.
      */
     private String category;
-
-    /**
-     * 삭제 플래그
-     * true: 삭제된 상품, false: 활성 상품
-     * 실제 데이터는 삭제하지 않고 논리적 삭제를 위해 사용됩니다.
-     */
-    private boolean delFlag;
-
-    /**
-     * 상품의 삭제 상태를 변경합니다.
-     * 
-     * @param delFlag 삭제 플래그 (true: 삭제, false: 활성)
-     */
-    public void changeDel(boolean delFlag) {
-        this.delFlag = delFlag;
-    }
 
     /**
      * 상품 이미지 목록

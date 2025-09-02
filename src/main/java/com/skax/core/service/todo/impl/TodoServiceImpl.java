@@ -10,6 +10,7 @@ import com.skax.core.dto.todo.response.TodoResponse;
 import com.skax.core.entity.todo.Todo;
 import com.skax.core.repository.todo.TodoRepository;
 import com.skax.core.service.todo.TodoService;
+import com.skax.core.util.ServiceUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -40,6 +41,7 @@ public class TodoServiceImpl implements TodoService {
 
     private final TodoRepository todoRepository;
     private final TodoMapper todoMapper;
+    private final ServiceUtils serviceUtils;
 
     @Override
     @Transactional
@@ -50,7 +52,7 @@ public class TodoServiceImpl implements TodoService {
         Todo savedTodo = todoRepository.save(todo);
         
         log.info("할일 생성 완료 - 할일번호: {}", savedTodo.getTno());
-        return todoMapper.toResponse(savedTodo);
+        return serviceUtils.mapWithAudit(savedTodo, todoMapper.toResponse(savedTodo));
     }
 
     @Override
@@ -58,7 +60,7 @@ public class TodoServiceImpl implements TodoService {
         log.info("할일 조회 시작 - 할일번호: {}", tno);
         
         Todo todo = findTodoByTno(tno);
-        return todoMapper.toResponse(todo);
+        return serviceUtils.mapWithAudit(todo, todoMapper.toResponse(todo));
     }
 
     @Override
@@ -72,7 +74,7 @@ public class TodoServiceImpl implements TodoService {
         Todo updatedTodo = todoRepository.save(todo);
         
         log.info("할일 수정 완료 - 할일번호: {}", updatedTodo.getTno());
-        return todoMapper.toResponse(updatedTodo);
+        return serviceUtils.mapWithAudit(updatedTodo, todoMapper.toResponse(updatedTodo));
     }
 
     @Override
@@ -169,7 +171,7 @@ public class TodoServiceImpl implements TodoService {
         Todo updatedTodo = todoRepository.save(todo);
         
         log.info("할일 완료 상태 토글 완료 - 할일번호: {}, 완료여부: {}", tno, updatedTodo.getComplete());
-        return todoMapper.toResponse(updatedTodo);
+        return serviceUtils.mapWithAudit(updatedTodo, todoMapper.toResponse(updatedTodo));
     }
 
     @Override

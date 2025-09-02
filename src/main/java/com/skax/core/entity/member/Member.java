@@ -3,8 +3,11 @@ package com.skax.core.entity.member;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.skax.core.entity.BaseEntity;
+
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
@@ -15,6 +18,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
  * 회원 정보를 나타내는 엔티티 클래스
@@ -46,7 +50,8 @@ import lombok.ToString;
 @AllArgsConstructor
 @Builder
 @ToString(exclude = "memberRoleList")
-public class Member {
+@EntityListeners(AuditingEntityListener.class)
+public class Member extends BaseEntity {
 
     /**
      * 회원 이메일 주소 (기본키)

@@ -1,12 +1,12 @@
 package com.skax.core.dto.role.response;
 
+import com.skax.core.dto.BaseDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
 
 /**
  * 역할 응답 DTO
@@ -18,11 +18,12 @@ import java.time.LocalDateTime;
  * @version 1.0
  */
 @Data
+@EqualsAndHashCode(callSuper = false)
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(description = "역할 응답")
-public class RoleResponse {
+public class RoleResponse extends BaseDto {
 
     /**
      * 역할 ID
@@ -49,26 +50,8 @@ public class RoleResponse {
     private Boolean isDefault;
 
     /**
-     * 삭제 여부
-     */
-    @Schema(description = "삭제 여부", example = "false")
-    private Boolean deleted;
-
-    /**
      * 해당 역할을 가진 회원 수
      */
     @Schema(description = "해당 역할을 가진 회원 수", example = "5")
     private Long memberCount;
-
-    /**
-     * 생성 시간
-     */
-    @Schema(description = "생성 시간", example = "2025-08-23T10:30:00")
-    private LocalDateTime createdAt;
-
-    /**
-     * 수정 시간
-     */
-    @Schema(description = "수정 시간", example = "2025-08-23T15:45:00")
-    private LocalDateTime updatedAt;
 }

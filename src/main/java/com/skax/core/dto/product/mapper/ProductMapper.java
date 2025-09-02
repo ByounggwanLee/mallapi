@@ -37,8 +37,8 @@ public interface ProductMapper {
     @Mapping(target = "pname", source = "productName")
     @Mapping(target = "price", source = "price")
     @Mapping(target = "pdesc", source = "description")
-    @Mapping(target = "delFlag", constant = "false")
     @Mapping(target = "imageList", ignore = true)
+    @Mapping(target = "category", ignore = true)
     Product toEntity(ProductCreateRequest request);
 
     /**
@@ -51,10 +51,8 @@ public interface ProductMapper {
     @Mapping(target = "productName", source = "pname")
     @Mapping(target = "price", source = "price")
     @Mapping(target = "description", source = "pdesc")
-    @Mapping(target = "deleted", source = "delFlag")
     @Mapping(target = "images", source = "imageList", qualifiedByName = "mapImages")
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "audit", ignore = true)
     ProductResponse toResponse(Product product);
 
     /**

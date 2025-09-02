@@ -13,6 +13,9 @@ import java.time.LocalDateTime;
  * <ul>
  *   <li>생성일시 (createdAt)</li>
  *   <li>수정일시 (updatedAt)</li>
+ *   <li>생성자 정보 (createdBy, createdByNickname)</li>
+ *   <li>수정자 정보 (updatedBy, updatedByNickname)</li>
+ *   <li>삭제 여부 (deleted)</li>
  * </ul>
  * 
  * @author ByounggwanLee
@@ -34,4 +37,29 @@ public abstract class BaseDto {
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updatedAt;
+
+    /**
+     * 생성자 이메일
+     */
+    private String createdBy;
+
+    /**
+     * 생성자 닉네임
+     */
+    private String createdByNickname;
+
+    /**
+     * 최종 수정자 이메일
+     */
+    private String updatedBy;
+
+    /**
+     * 최종 수정자 닉네임
+     */
+    private String updatedByNickname;
+
+    /**
+     * 삭제 여부
+     */
+    private Boolean deleted;
 }

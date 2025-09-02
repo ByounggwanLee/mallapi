@@ -38,7 +38,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      * 
      * @return 활성 상품 목록
      */
-    List<Product> findByDelFlagFalse();
+    List<Product> findByDeletedFalse();
 
     /**
      * 삭제되지 않은 상품 목록을 페이징하여 조회합니다.
@@ -46,7 +46,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      * @param pageable 페이징 정보
      * @return 페이징된 활성 상품 목록
      */
-    Page<Product> findByDelFlagFalse(Pageable pageable);
+    Page<Product> findByDeletedFalse(Pageable pageable);
 
     /**
      * 상품명에 특정 키워드가 포함된 활성 상품을 검색합니다.
@@ -54,7 +54,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      * @param keyword 검색 키워드
      * @return 검색된 상품 목록
      */
-    List<Product> findByPnameContainingAndDelFlagFalse(String keyword);
+    List<Product> findByPnameContainingAndDeletedFalse(String keyword);
 
     /**
      * 상품명에 특정 키워드가 포함된 활성 상품을 페이징하여 검색합니다.
@@ -63,7 +63,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      * @param pageable 페이징 정보
      * @return 페이징된 검색 결과
      */
-    Page<Product> findByPnameContainingAndDelFlagFalse(String keyword, Pageable pageable);
+    Page<Product> findByPnameContainingAndDeletedFalse(String keyword, Pageable pageable);
 
     /**
      * 특정 가격 이상의 활성 상품을 조회합니다.
@@ -71,7 +71,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      * @param price 최소 가격
      * @return 해당 가격 이상의 상품 목록
      */
-    List<Product> findByPriceGreaterThanEqualAndDelFlagFalse(int price);
+    List<Product> findByPriceGreaterThanEqualAndDeletedFalse(int price);
 
     /**
      * 특정 가격 이하의 활성 상품을 조회합니다.
@@ -79,7 +79,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      * @param price 최대 가격
      * @return 해당 가격 이하의 상품 목록
      */
-    List<Product> findByPriceLessThanEqualAndDelFlagFalse(int price);
+    List<Product> findByPriceLessThanEqualAndDeletedFalse(int price);
 
     /**
      * 특정 가격 범위의 활성 상품을 조회합니다.
@@ -88,7 +88,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      * @param maxPrice 최대 가격
      * @return 해당 가격 범위의 상품 목록
      */
-    List<Product> findByPriceBetweenAndDelFlagFalse(int minPrice, int maxPrice);
+    List<Product> findByPriceBetweenAndDeletedFalse(int minPrice, int maxPrice);
 
     /**
      * 특정 가격 범위의 활성 상품을 페이징하여 조회합니다.
@@ -98,7 +98,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      * @param pageable 페이징 정보
      * @return 페이징된 상품 목록
      */
-    Page<Product> findByPriceBetweenAndDelFlagFalse(int minPrice, int maxPrice, Pageable pageable);
+    Page<Product> findByPriceBetweenAndDeletedFalse(int minPrice, int maxPrice, Pageable pageable);
 
     /**
      * 상품 ID로 활성 상품을 조회합니다.
@@ -106,7 +106,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      * @param pno 상품 ID
      * @return 해당 ID의 활성 상품
      */
-    Optional<Product> findByPnoAndDelFlagFalse(Long pno);
+    Optional<Product> findByPnoAndDeletedFalse(Long pno);
 
     /**
      * 복합 조건으로 상품을 검색합니다.
@@ -117,7 +117,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      * @param pageable 페이징 정보
      * @return 검색 조건에 맞는 페이징된 상품 목록
      */
-    @Query("SELECT p FROM Product p WHERE p.delFlag = false AND " +
+    @Query("SELECT p FROM Product p WHERE p.deleted = false AND " +
            "(:keyword IS NULL OR p.pname LIKE %:keyword%) AND " +
            "(:minPrice IS NULL OR p.price >= :minPrice) AND " +
            "(:maxPrice IS NULL OR p.price <= :maxPrice)")
@@ -132,7 +132,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      * @param keyword 검색 키워드
      * @return 설명에 키워드가 포함된 상품 목록
      */
-    List<Product> findByPdescContainingAndDelFlagFalse(String keyword);
+    List<Product> findByPdescContainingAndDeletedFalse(String keyword);
 
     /**
      * 상품명 또는 설명에 키워드가 포함된 활성 상품을 검색합니다.
@@ -141,7 +141,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      * @param pageable 페이징 정보
      * @return 페이징된 검색 결과
      */
-    @Query("SELECT p FROM Product p WHERE p.delFlag = false AND " +
+    @Query("SELECT p FROM Product p WHERE p.deleted = false AND " +
            "(p.pname LIKE %:keyword% OR p.pdesc LIKE %:keyword%)")
     Page<Product> findByKeywordInNameOrDescription(@Param("keyword") String keyword, Pageable pageable);
 
@@ -150,7 +150,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      * 
      * @return 활성 상품 개수
      */
-    long countByDelFlagFalse();
+    long countByDeletedFalse();
 
     /**
      * 특정 가격 범위의 활성 상품 개수를 조회합니다.
@@ -159,7 +159,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      * @param maxPrice 최대 가격
      * @return 해당 가격 범위의 상품 개수
      */
-    long countByPriceBetweenAndDelFlagFalse(int minPrice, int maxPrice);
+    long countByPriceBetweenAndDeletedFalse(int minPrice, int maxPrice);
     
     /**
      * 상품명 존재 여부를 확인합니다.
@@ -176,7 +176,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      * @param pageable 페이징 정보
      * @return 검색된 상품 목록
      */
-    Page<Product> findByPnameContainingIgnoreCaseAndDelFlagFalse(String pname, Pageable pageable);
+    Page<Product> findByPnameContainingIgnoreCaseAndDeletedFalse(String pname, Pageable pageable);
     
     /**
      * 카테고리별 활성 상품을 조회합니다.
@@ -185,7 +185,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      * @param pageable 페이징 정보
      * @return 카테고리별 상품 목록
      */
-    Page<Product> findByCategoryAndDelFlagFalse(String category, Pageable pageable);
+    Page<Product> findByCategoryAndDeletedFalse(String category, Pageable pageable);
     
     /**
      * 카테고리별 활성 상품 수를 조회합니다.
@@ -193,27 +193,27 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      * @param category 카테고리명
      * @return 카테고리별 상품 수
      */
-    long countByCategoryAndDelFlagFalse(String category);
+    long countByCategoryAndDeletedFalse(String category);
     
     /**
      * 활성 상품 중 최고가를 조회합니다.
      * 
      * @return 최고가 상품
      */
-    Optional<Product> findTopByDelFlagFalseOrderByPriceDesc();
+    Optional<Product> findTopByDeletedFalseOrderByPriceDesc();
     
     /**
      * 활성 상품 중 최저가를 조회합니다.
      * 
      * @return 최저가 상품
      */
-    Optional<Product> findTopByDelFlagFalseOrderByPriceAsc();
+    Optional<Product> findTopByDeletedFalseOrderByPriceAsc();
     
     /**
      * 활성 상품의 평균 가격을 조회합니다.
      * 
      * @return 평균 가격
      */
-    @Query("SELECT AVG(p.price) FROM Product p WHERE p.delFlag = false")
+    @Query("SELECT AVG(p.price) FROM Product p WHERE p.deleted = false")
     Double findAveragePriceOfActiveProducts();
 }

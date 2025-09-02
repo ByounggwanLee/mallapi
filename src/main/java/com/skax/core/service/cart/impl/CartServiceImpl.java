@@ -14,6 +14,7 @@ import com.skax.core.repository.cart.CartItemRepository;
 import com.skax.core.repository.member.MemberRepository;
 import com.skax.core.repository.product.ProductRepository;
 import com.skax.core.service.cart.CartService;
+import com.skax.core.util.ServiceUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -41,6 +42,7 @@ public class CartServiceImpl implements CartService {
     private final MemberRepository memberRepository;
     private final ProductRepository productRepository;
     private final CartMapper cartMapper;
+    private final ServiceUtils serviceUtils;
 
     @Override
     @Transactional
@@ -61,11 +63,15 @@ public class CartServiceImpl implements CartService {
                 });
         
         CartResponse response = cartMapper.toResponse(cart);
+        serviceUtils.mapWithAudit(cart, response);
         
         // 장바구니 아이템들 조회 및 설정
         List<CartItem> items = cartItemRepository.findByCartId(cart.getCno());
         List<CartItemResponse> itemResponses = items.stream()
-                .map(cartMapper::toItemResponse)
+                .map(item -> {
+                    CartItemResponse itemResponse = cartMapper.toItemResponse(item);
+                    return serviceUtils.mapWithAudit(item, itemResponse);
+                })
                 .toList();
         
         // items 필드 수동 설정
@@ -98,7 +104,8 @@ public class CartServiceImpl implements CartService {
             existingItem.changeQty(existingItem.getQty() + request.getQuantity());
             CartItem updatedItem = cartItemRepository.save(existingItem);
             log.info("Updated existing cart item with id: {}", updatedItem.getCino());
-            return cartMapper.toItemResponse(updatedItem);
+            CartItemResponse response = cartMapper.toItemResponse(updatedItem);
+            return serviceUtils.mapWithAudit(updatedItem, response);
         } else {
             // 새로운 아이템 추가
             CartItem cartItem = CartItem.builder()
@@ -109,7 +116,8 @@ public class CartServiceImpl implements CartService {
             
             CartItem savedItem = cartItemRepository.save(cartItem);
             log.info("Successfully added new cart item with id: {}", savedItem.getCino());
-            return cartMapper.toItemResponse(savedItem);
+            CartItemResponse response = cartMapper.toItemResponse(savedItem);
+            return serviceUtils.mapWithAudit(savedItem, response);
         }
     }
 
@@ -132,7 +140,8 @@ public class CartServiceImpl implements CartService {
         CartItem updatedItem = cartItemRepository.save(cartItem);
         log.info("Successfully updated cart item with id: {}", itemId);
         
-        return cartMapper.toItemResponse(updatedItem);
+        CartItemResponse response = cartMapper.toItemResponse(updatedItem);
+        return serviceUtils.mapWithAudit(updatedItem, response);
     }
 
     @Override
@@ -196,7 +205,8 @@ public class CartServiceImpl implements CartService {
         
         log.info("Successfully increased quantity for cart item with id: {}", itemId);
         
-        return cartMapper.toItemResponse(updatedItem);
+        CartItemResponse response = cartMapper.toItemResponse(updatedItem);
+        return serviceUtils.mapWithAudit(updatedItem, response);
     }
 
     @Override
@@ -222,7 +232,8 @@ public class CartServiceImpl implements CartService {
             cartItem.changeQty(newQuantity);
             CartItem updatedItem = cartItemRepository.save(cartItem);
             log.info("Successfully decreased quantity for cart item with id: {}", itemId);
-            return cartMapper.toItemResponse(updatedItem);
+            CartItemResponse response = cartMapper.toItemResponse(updatedItem);
+            return serviceUtils.mapWithAudit(updatedItem, response);
         }
     }
 

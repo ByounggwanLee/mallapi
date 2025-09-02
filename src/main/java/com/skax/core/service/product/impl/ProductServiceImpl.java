@@ -1,6 +1,7 @@
 package com.skax.core.service.product.impl;
 
 import com.skax.core.common.response.PageResponse;
+import com.skax.core.dto.AuditDto;
 import com.skax.core.dto.product.request.ProductCreateRequest;
 import com.skax.core.dto.product.request.ProductUpdateRequest;
 import com.skax.core.dto.product.response.ProductResponse;
@@ -41,7 +42,6 @@ public class ProductServiceImpl implements ProductService {
                 .price(request.getPrice())
                 .pdesc(request.getDescription())
                 .category("기본") // 현재 DTO에 category 필드가 없으므로 기본값 설정
-                .delFlag(false)
                 .build();
         
         // 이미지 추가
@@ -89,7 +89,7 @@ public class ProductServiceImpl implements ProductService {
         log.info("상품 삭제 요청: pno={}", pno);
         
         Product product = getProductEntity(pno);
-        product.changeDel(true);
+        product.softDelete();
         
         log.info("상품 삭제 완료: pno={}", pno);
     }
@@ -100,7 +100,7 @@ public class ProductServiceImpl implements ProductService {
         log.info("상품 복구 요청: pno={}", pno);
         
         Product product = getProductEntity(pno);
-        product.changeDel(false);
+        product.restore();
         
         log.info("상품 복구 완료: pno={}", pno);
     }
@@ -117,7 +117,7 @@ public class ProductServiceImpl implements ProductService {
     public PageResponse<ProductResponse> getAllProducts(Pageable pageable) {
         log.debug("전체 상품 조회 요청: pageable={}", pageable);
         
-        Page<Product> productPage = productRepository.findByDelFlagFalse(pageable);
+        Page<Product> productPage = productRepository.findByDeletedFalse(pageable);
         return convertToPageResponse(productPage);
     }
 
@@ -125,7 +125,7 @@ public class ProductServiceImpl implements ProductService {
     public PageResponse<ProductResponse> searchProductsByName(String keyword, Pageable pageable) {
         log.debug("상품명 검색 요청: keyword={}, pageable={}", keyword, pageable);
         
-        Page<Product> productPage = productRepository.findByPnameContainingAndDelFlagFalse(keyword, pageable);
+        Page<Product> productPage = productRepository.findByPnameContainingAndDeletedFalse(keyword, pageable);
         return convertToPageResponse(productPage);
     }
 
@@ -134,7 +134,7 @@ public class ProductServiceImpl implements ProductService {
         log.debug("상품 검색 요청: keyword={}, pageable={}", keyword, pageable);
         
         // 간단한 구현으로 상품명만 검색 (실제로는 OR 조건으로 설명도 포함해야 함)
-        Page<Product> productPage = productRepository.findByPnameContainingAndDelFlagFalse(keyword, pageable);
+        Page<Product> productPage = productRepository.findByPnameContainingAndDeletedFalse(keyword, pageable);
         return convertToPageResponse(productPage);
     }
 
@@ -142,7 +142,7 @@ public class ProductServiceImpl implements ProductService {
     public PageResponse<ProductResponse> getProductsByPriceRange(int minPrice, int maxPrice, Pageable pageable) {
         log.debug("가격 범위 상품 조회 요청: minPrice={}, maxPrice={}, pageable={}", minPrice, maxPrice, pageable);
         
-        Page<Product> productPage = productRepository.findByPriceBetweenAndDelFlagFalse(minPrice, maxPrice, pageable);
+        Page<Product> productPage = productRepository.findByPriceBetweenAndDeletedFalse(minPrice, maxPrice, pageable);
         return convertToPageResponse(productPage);
     }
 
@@ -155,13 +155,13 @@ public class ProductServiceImpl implements ProductService {
         
         if (keyword != null && minPrice != null && maxPrice != null) {
             // 복합 조건은 일단 키워드 검색만 처리
-            productPage = productRepository.findByPnameContainingAndDelFlagFalse(keyword, pageable);
+            productPage = productRepository.findByPnameContainingAndDeletedFalse(keyword, pageable);
         } else if (keyword != null) {
-            productPage = productRepository.findByPnameContainingAndDelFlagFalse(keyword, pageable);
+            productPage = productRepository.findByPnameContainingAndDeletedFalse(keyword, pageable);
         } else if (minPrice != null && maxPrice != null) {
-            productPage = productRepository.findByPriceBetweenAndDelFlagFalse(minPrice, maxPrice, pageable);
+            productPage = productRepository.findByPriceBetweenAndDeletedFalse(minPrice, maxPrice, pageable);
         } else {
-            productPage = productRepository.findByDelFlagFalse(pageable);
+            productPage = productRepository.findByDeletedFalse(pageable);
         }
         
         return convertToPageResponse(productPage);
@@ -206,31 +206,30 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public long getTotalActiveProductCount() {
-        return productRepository.countByDelFlagFalse();
+        return productRepository.countByDeletedFalse();
     }
 
     @Override
     public long getProductCountByPriceRange(int minPrice, int maxPrice) {
-        return productRepository.countByPriceBetweenAndDelFlagFalse(minPrice, maxPrice);
+        return productRepository.countByPriceBetweenAndDeletedFalse(minPrice, maxPrice);
     }
 
     @Override
     public double getAverageProductPrice() {
-        // Repository에 해당 메서드가 없으므로 임시로 0.0 반환
-        // 실제로는 @Query 어노테이션으로 구현해야 함
-        return 0.0;
+        Double average = productRepository.findAveragePriceOfActiveProducts();
+        return average != null ? average : 0.0;
     }
 
     @Override
     public ProductResponse getMostExpensiveProduct() {
-        Product product = productRepository.findTopByDelFlagFalseOrderByPriceDesc()
+        Product product = productRepository.findTopByDeletedFalseOrderByPriceDesc()
                 .orElseThrow(() -> new IllegalArgumentException("등록된 상품이 없습니다"));
         return convertToResponse(product);
     }
 
     @Override
     public ProductResponse getCheapestProduct() {
-        Product product = productRepository.findTopByDelFlagFalseOrderByPriceAsc()
+        Product product = productRepository.findTopByDeletedFalseOrderByPriceAsc()
                 .orElseThrow(() -> new IllegalArgumentException("등록된 상품이 없습니다"));
         return convertToResponse(product);
     }
@@ -256,7 +255,7 @@ public class ProductServiceImpl implements ProductService {
      */
     private Product getActiveProductEntity(Long pno) {
         Product product = getProductEntity(pno);
-        if (product.isDelFlag()) {
+        if (product.isDeleted()) {
             throw new IllegalArgumentException("삭제된 상품입니다: " + pno);
         }
         return product;
@@ -269,15 +268,26 @@ public class ProductServiceImpl implements ProductService {
      * @return ProductResponse
      */
     private ProductResponse convertToResponse(Product product) {
+        // 감사 정보 구성
+        AuditDto auditDto = AuditDto.builder()
+                .createdBy(product.getCreatedBy() != null ? product.getCreatedBy().getEmail() : null)
+                .createdByNickname(product.getCreatedBy() != null ? product.getCreatedBy().getNickname() : null)
+                .updatedBy(product.getUpdatedBy() != null ? product.getUpdatedBy().getEmail() : null)
+                .updatedByNickname(product.getUpdatedBy() != null ? product.getUpdatedBy().getNickname() : null)
+                .createdAt(product.getCreatedAt())
+                .updatedAt(product.getUpdatedAt())
+                .deleted(product.isDeleted())
+                .build();
+
         return ProductResponse.builder()
                 .pno(product.getPno())
                 .productName(product.getPname())
-                .price(product.getPrice())
                 .description(product.getPdesc())
-                .deleted(product.isDelFlag())
+                .price(product.getPrice())
                 .images(product.getImageList().stream()
                         .map(image -> image.getFileName())
                         .toList())
+                .audit(auditDto)
                 .build();
     }
 

@@ -6,8 +6,8 @@ import com.skax.core.dto.role.response.RoleResponse;
 import com.skax.core.common.response.PageResponse;
 import com.skax.core.entity.member.Role;
 import com.skax.core.repository.member.RoleRepository;
-import com.skax.core.repository.member.MemberRepository;
 import com.skax.core.service.role.RoleService;
+import com.skax.core.util.ServiceUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -33,7 +33,7 @@ import java.util.List;
 public class RoleServiceImpl implements RoleService {
 
     private final RoleRepository roleRepository;
-    private final MemberRepository memberRepository;
+    private final ServiceUtils serviceUtils;
 
     @Override
     @Transactional
@@ -55,7 +55,8 @@ public class RoleServiceImpl implements RoleService {
         Role savedRole = roleRepository.save(role);
         log.info("Successfully created role with id: {}", savedRole.getId());
         
-        return convertToResponse(savedRole);
+        RoleResponse response = convertToResponse(savedRole);
+        return serviceUtils.mapWithAudit(savedRole, response);
     }
 
     @Override
@@ -86,7 +87,8 @@ public class RoleServiceImpl implements RoleService {
         Role updatedRole = roleRepository.save(role);
         log.info("Successfully updated role with id: {}", roleId);
         
-        return convertToResponse(updatedRole);
+        RoleResponse response = convertToResponse(updatedRole);
+        return serviceUtils.mapWithAudit(updatedRole, response);
     }
 
     @Override
@@ -134,7 +136,8 @@ public class RoleServiceImpl implements RoleService {
             throw new IllegalArgumentException("삭제된 역할입니다: " + roleId);
         }
         
-        return convertToResponse(role);
+        RoleResponse response = convertToResponse(role);
+        return serviceUtils.mapWithAudit(role, response);
     }
 
     @Override
@@ -144,7 +147,8 @@ public class RoleServiceImpl implements RoleService {
         Role role = roleRepository.findByRoleNameAndIsActiveTrue(roleName)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 역할입니다: " + roleName));
         
-        return convertToResponse(role);
+        RoleResponse response = convertToResponse(role);
+        return serviceUtils.mapWithAudit(role, response);
     }
 
     @Override
@@ -155,7 +159,10 @@ public class RoleServiceImpl implements RoleService {
         
         List<RoleResponse> roleResponses = rolePage.getContent().stream()
                 .filter(Role::getIsActive)
-                .map(this::convertToResponse)
+                .map(role -> {
+                    RoleResponse response = convertToResponse(role);
+                    return serviceUtils.mapWithAudit(role, response);
+                })
                 .toList();
         
         return PageResponse.<RoleResponse>builder()
@@ -244,7 +251,7 @@ public class RoleServiceImpl implements RoleService {
     public void unsetDefaultRole(Long roleId) {
         log.info("Unsetting default role: {}", roleId);
         
-        Role role = roleRepository.findById(roleId)
+        roleRepository.findById(roleId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 역할입니다: " + roleId));
         
         // 기본 역할 해제 로직 구현 (현재는 단순히 로그만 남김)
@@ -265,7 +272,7 @@ public class RoleServiceImpl implements RoleService {
     public long getMemberCountByRole(Long roleId) {
         log.debug("Getting member count for role: {}", roleId);
         
-        Role role = roleRepository.findById(roleId)
+        roleRepository.findById(roleId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 역할입니다: " + roleId));
         
         // 실제로는 MemberRepository에서 해당 역할을 가진 회원 수를 조회해야 함
@@ -294,8 +301,6 @@ public class RoleServiceImpl implements RoleService {
                 .roleName(role.getRoleName())
                 .description(role.getDescription())
                 .isDefault("ROLE_USER".equals(role.getRoleName())) // 기본 역할 판단
-                .createdAt(role.getCreatedAt())
-                .updatedAt(role.getUpdatedAt())
                 .build();
     }
 }

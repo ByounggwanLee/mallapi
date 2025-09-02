@@ -1,12 +1,12 @@
 package com.skax.core.dto.product.response;
 
+import com.skax.core.dto.AuditDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -56,20 +56,8 @@ public class ProductResponse {
     private List<String> images;
 
     /**
-     * 삭제 여부
+     * 감사 정보 (생성자, 수정자, 생성일시, 수정일시, 삭제여부)
      */
-    @Schema(description = "삭제 여부", example = "false")
-    private Boolean deleted;
-
-    /**
-     * 생성 시간
-     */
-    @Schema(description = "생성 시간", example = "2025-08-23T10:30:00")
-    private LocalDateTime createdAt;
-
-    /**
-     * 수정 시간
-     */
-    @Schema(description = "수정 시간", example = "2025-08-23T15:45:00")
-    private LocalDateTime updatedAt;
+    @Schema(description = "감사 정보")
+    private AuditDto audit;
 }

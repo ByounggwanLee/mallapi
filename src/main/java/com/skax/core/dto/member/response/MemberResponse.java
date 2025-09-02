@@ -24,12 +24,7 @@ import java.util.Set;
 public class MemberResponse extends BaseDto {
 
     /**
-     * 회원 ID
-     */
-    private Long id;
-
-    /**
-     * 이메일
+     * 이메일 (기본키)
      */
     private String email;
 

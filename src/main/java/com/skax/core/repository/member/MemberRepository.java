@@ -32,7 +32,7 @@ import java.util.Optional;
  * @version 1.0
  */
 @Repository
-public interface MemberRepository extends JpaRepository<Member, Long> {
+public interface MemberRepository extends JpaRepository<Member, String> {
 
     /**
      * 이메일로 회원을 조회합니다.
